@@ -3,6 +3,9 @@ import { db } from "~/server/db";
 import { Card } from "~/components/ui/card";
 import { Truck, Users, MapPin, Briefcase } from "lucide-react";
 
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
+
 async function DashboardStats() {
   try {
     const [vansCount, driversCount, tripsCount, bookingsCount] = await Promise.all([

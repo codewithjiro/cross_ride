@@ -8,6 +8,9 @@ import { Badge } from "~/components/ui/badge";
 import { MapPin, Calendar, Users, Trash2 } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
 
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
+
 async function MyBookingsTable() {
   const { userId } = await auth();
   if (!userId) return null;

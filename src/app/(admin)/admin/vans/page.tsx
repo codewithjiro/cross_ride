@@ -7,6 +7,9 @@ import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
+
 async function VansTable() {
   const allVans = await db.query.vans.findMany();
 

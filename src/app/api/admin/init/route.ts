@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as AdminInitRequest;
     const { email } = body;
+    const secret = request.headers.get("X-Admin-Secret");
     const initSecret = process.env.ADMIN_INIT_SECRET ?? "change-me-in-production";
 
     // Verify secret
@@ -28,8 +29,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    const { email } = (await request.json()) as { email?: string };
 
     if (!email) {
       return NextResponse.json(

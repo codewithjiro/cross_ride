@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import { db } from "~/server/db";
 import { adminLogs } from "~/server/db/schema";
 import { Card } from "~/components/ui/card";
+
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
 import { Badge } from "~/components/ui/badge";
 import { Shield } from "lucide-react";
 

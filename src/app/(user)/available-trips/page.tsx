@@ -7,6 +7,9 @@ import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MapPin, Calendar, Users, ArrowRight } from "lucide-react";
 
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
+
 async function AvailableTripsTable() {
   const availableTrips = await db.query.trips.findMany({
     where: (trips, { eq, gt, and }) =>

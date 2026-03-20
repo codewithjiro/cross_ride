@@ -2,6 +2,7 @@ import { hash, compare } from "bcryptjs";
 import { db } from "~/server/db";
 import { users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
+import { cookies } from "next/headers";
 
 // Hash password
 export async function hashPassword(password: string): Promise<string> {
@@ -29,6 +30,40 @@ export async function getUserById(id: string) {
   return db.query.users.findFirst({
     where: eq(users.id, id),
   });
+}
+
+// Get current user from session
+export async function getCurrentUser() {
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("userId")?.value;
+
+  if (!userId) {
+    return null;
+  }
+
+  return getUserById(userId);
+}
+
+// Require authentication
+export async function requireAuth() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  return user;
+}
+
+// Require admin role
+export async function requireAdmin() {
+  const user = await requireAuth();
+
+  if (user.role !== "admin") {
+    throw new Error("Forbidden: Admin access required");
+  }
+
+  return user;
 }
 
 // Type for session user

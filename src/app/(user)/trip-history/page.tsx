@@ -7,6 +7,9 @@ import { Badge } from "~/components/ui/badge";
 import { MapPin, Calendar, Users } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
 
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
+
 async function TripHistoryTable() {
   const { userId } = await auth();
   if (!userId) return null;

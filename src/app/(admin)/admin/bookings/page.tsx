@@ -3,6 +3,9 @@ import { db } from "~/server/db";
 import { bookings } from "~/server/db/schema";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
+
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
 import { Badge } from "~/components/ui/badge";
 import { Check, X, MapPin, Users } from "lucide-react";
 

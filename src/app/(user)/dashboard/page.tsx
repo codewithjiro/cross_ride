@@ -3,6 +3,9 @@ import Link from "next/link";
 import { db } from "~/server/db";
 import { bookings } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
+
+// Force dynamic rendering (no static prerendering)
+export const dynamic = "force-dynamic";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";

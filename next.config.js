@@ -14,6 +14,12 @@ const config = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Skip static generation for dynamic pages with database queries
+  staticPageGenerationTimeout: 120,
+  // Disable image optimization for faster builds
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default config;
