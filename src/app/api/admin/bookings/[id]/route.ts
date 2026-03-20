@@ -48,10 +48,7 @@ export async function PATCH(
     });
 
     if (!booking) {
-      return NextResponse.json(
-        { error: "Booking not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
     // If rejecting, free up the reserved seats

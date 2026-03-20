@@ -42,9 +42,12 @@ export async function GET() {
     console.error("Availability error:", error);
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch availability",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch availability",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

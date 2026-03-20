@@ -26,7 +26,7 @@ export default function RequestTrip() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [availability, setAvailability] = useState<AvailabilityData | null>(
-    null
+    null,
   );
   const [loadingAvailability, setLoadingAvailability] = useState(true);
 

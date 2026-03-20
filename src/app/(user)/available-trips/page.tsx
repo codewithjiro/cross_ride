@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { db } from "~/server/db";
 import { trips as tripsTable, bookings } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { getCurrentUser } from "~/lib/auth";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -12,13 +13,24 @@ import { MapPin, Calendar, Users, ArrowRight } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 async function AvailableTripsTable() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
   // Get all trips with pending bookings to exclude them
   const tripsWithPending = await db
     .select({ tripId: bookings.tripId })
     .from(bookings)
     .where(eq(bookings.status, "pending"));
-  
-  const pendingTripIds = tripsWithPending.map(b => b.tripId);
+
+  const pendingTripIds = tripsWithPending.map((b) => b.tripId);
+
+  // Get current user's bookings to exclude
+  const userBookings = await db
+    .select({ tripId: bookings.tripId })
+    .from(bookings)
+    .where(eq(bookings.userId, user.id));
+
+  const userBookedTripIds = userBookings.map((b) => b.tripId);
 
   const availableTrips = await db.query.trips.findMany({
     where: (trips, { eq, gt, and, notInArray }) =>
@@ -26,7 +38,12 @@ async function AvailableTripsTable() {
         eq(trips.status, "scheduled"),
         gt(trips.seatsAvailable, 0),
         gt(trips.departureTime, new Date()),
-        pendingTripIds.length > 0 ? notInArray(trips.id, pendingTripIds) : undefined,
+        pendingTripIds.length > 0
+          ? notInArray(trips.id, pendingTripIds)
+          : undefined,
+        userBookedTripIds.length > 0
+          ? notInArray(trips.id, userBookedTripIds)
+          : undefined,
       ),
     with: {
       van: true,

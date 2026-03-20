@@ -51,7 +51,14 @@ export async function POST(request: NextRequest) {
     // Check if trip already exists for this van + driver + time in same hour
     const depTime = new Date(departureTime);
     // Round to nearest hour to match booking times
-    const depTimeHour = new Date(depTime.getFullYear(), depTime.getMonth(), depTime.getDate(), depTime.getHours(), 0, 0);
+    const depTimeHour = new Date(
+      depTime.getFullYear(),
+      depTime.getMonth(),
+      depTime.getDate(),
+      depTime.getHours(),
+      0,
+      0,
+    );
     const depTimeNextHour = new Date(depTimeHour.getTime() + 60 * 60 * 1000);
 
     const existingTrip = await db.query.trips.findFirst({
@@ -92,16 +99,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!currentTrip) {
-      return NextResponse.json(
-        { error: "Trip not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
     if (currentTrip.seatsAvailable < seatsRequested) {
       return NextResponse.json(
         { error: "Not enough available seats" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
