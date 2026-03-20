@@ -3,7 +3,7 @@
 
 export const VANS = [
   {
-    id: "van-1",
+    id: "1",
     name: "Hiace Commuter Deluxe",
     capacity: 14,
     color: "from-blue-500 to-blue-600",
@@ -11,7 +11,7 @@ export const VANS = [
     description: "Comfortable air-conditioned transport for daily commutes",
   },
   {
-    id: "van-2",
+    id: "2",
     name: "Hiace Grandia",
     capacity: 11,
     color: "from-purple-500 to-purple-600",
@@ -19,7 +19,7 @@ export const VANS = [
     description: "Premium executive van with enhanced comfort features",
   },
   {
-    id: "van-3",
+    id: "3",
     name: "L300 Van",
     capacity: 10,
     color: "from-emerald-500 to-emerald-600",
@@ -30,7 +30,7 @@ export const VANS = [
 
 export const DRIVERS = [
   {
-    id: "driver-1",
+    id: "1",
     name: "Jiro Gonzales",
     role: "Senior Driver",
     initials: "JG",
@@ -39,7 +39,7 @@ export const DRIVERS = [
     specialization: "Fleet Coordinator",
   },
   {
-    id: "driver-2",
+    id: "2",
     name: "Jenah Ambagan",
     role: "Professional Driver",
     initials: "JA",
@@ -48,7 +48,7 @@ export const DRIVERS = [
     specialization: "Safety Specialist",
   },
   {
-    id: "driver-3",
+    id: "3",
     name: "Joyce Manaloto",
     role: "Professional Driver",
     initials: "JM",
@@ -57,7 +57,7 @@ export const DRIVERS = [
     specialization: "Route Expert",
   },
   {
-    id: "driver-4",
+    id: "4",
     name: "Venice Bumagat",
     role: "Professional Driver",
     initials: "VB",

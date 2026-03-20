@@ -46,15 +46,20 @@ export default function RequestTrip() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/bookings", {
+      // Parse date to get departureTime and create arrival time (2 hours later)
+      const depDateTime = new Date(formData.date);
+      const arrDateTime = new Date(depDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+
+      const response = await fetch("/api/bookings/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          vanName: selectedVan?.name,
-          driverName: selectedDriver?.name,
-          departureTime: new Date(formData.date).toISOString(),
+          vanId: parseInt(formData.vanId),
+          driverId: parseInt(formData.driverId),
+          route: `Holy Cross College Route`,
+          departureTime: depDateTime.toISOString(),
+          arrivalTime: arrDateTime.toISOString(),
           seatsRequested: formData.seatsRequested,
-          route: `Trip with ${selectedDriver?.name}`,
         }),
       });
 
