@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (existingTrip) {
       tripId = existingTrip.id;
     } else {
-      // Create new pending trip (won't show in available trips until approved)
+      // Create new scheduled trip
       const newTrip = await db
         .insert(trips)
         .values({
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
           arrivalTime: new Date(arrivalTime),
           seatsAvailable: 15, // Default capacity
           seatsReserved: 0,
-          status: "pending",
+          status: "scheduled",
         })
         .returning();
 

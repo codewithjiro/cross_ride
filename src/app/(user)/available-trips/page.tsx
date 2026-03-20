@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { db } from "~/server/db";
-import { trips as tripsTable } from "~/server/db/schema";
+import { trips as tripsTable, bookings } from "~/server/db/schema";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -11,12 +11,23 @@ import { MapPin, Calendar, Users, ArrowRight } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 async function AvailableTripsTable() {
+  // Get all trips with pending bookings to exclude them
+  const tripsWithPending = await db
+    .select({ tripId: bookings.tripId })
+    .from(bookings)
+    .where(
+      (bookings, { eq }) => eq(bookings.status, "pending")
+    );
+  
+  const pendingTripIds = tripsWithPending.map(b => b.tripId);
+
   const availableTrips = await db.query.trips.findMany({
-    where: (trips, { eq, gt, and }) =>
+    where: (trips, { eq, gt, and, notInArray }) =>
       and(
         eq(trips.status, "scheduled"),
         gt(trips.seatsAvailable, 0),
         gt(trips.departureTime, new Date()),
+        pendingTripIds.length > 0 ? notInArray(trips.id, pendingTripIds) : undefined,
       ),
     with: {
       van: true,
