@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "~/server/db";
 import { bookings, trips, users } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lt } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,14 +48,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if trip already exists for this van + driver + date combo
+    // Check if trip already exists for this van + driver + time in same hour
+    const depTime = new Date(departureTime);
+    // Round to nearest hour to match booking times
+    const depTimeHour = new Date(depTime.getFullYear(), depTime.getMonth(), depTime.getDate(), depTime.getHours(), 0, 0);
+    const depTimeNextHour = new Date(depTimeHour.getTime() + 60 * 60 * 1000);
+
     const existingTrip = await db.query.trips.findFirst({
-      where: (trips, { eq, and }) =>
-        and(
-          eq(trips.vanId, vanId),
-          eq(trips.driverId, driverId),
-          eq(trips.departureTime, new Date(departureTime)),
-        ),
+      where: and(
+        eq(trips.vanId, vanId),
+        eq(trips.driverId, driverId),
+        gte(trips.departureTime, depTimeHour),
+        lt(trips.departureTime, depTimeNextHour),
+      ),
     });
 
     let tripId: number;
@@ -63,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (existingTrip) {
       tripId = existingTrip.id;
     } else {
-      // Create new pending trip
+      // Create new pending trip (won't show in available trips until approved)
       const newTrip = await db
         .insert(trips)
         .values({
@@ -74,7 +79,7 @@ export async function POST(request: NextRequest) {
           arrivalTime: new Date(arrivalTime),
           seatsAvailable: 15, // Default capacity
           seatsReserved: 0,
-          status: "scheduled",
+          status: "pending",
         })
         .returning();
 
