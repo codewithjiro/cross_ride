@@ -21,6 +21,16 @@ interface AvailabilityData {
   times: Array<{ value: string; label: string }>;
 }
 
+interface ScheduledTrip {
+  id: number;
+  vanId: number;
+  driverId: number;
+  time: string;
+  seatsAvailable: number;
+  van: { name: string };
+  driver: { name: string };
+}
+
 export default function RequestTrip() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -29,6 +39,8 @@ export default function RequestTrip() {
     null,
   );
   const [loadingAvailability, setLoadingAvailability] = useState(true);
+  const [scheduledTrips, setScheduledTrips] = useState<ScheduledTrip[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
 
   const [formData, setFormData] = useState<BookingRequest>({
     vanId: "",
@@ -67,6 +79,30 @@ export default function RequestTrip() {
 
     fetchAvailability();
   }, []);
+
+  // Fetch scheduled trips for selected date
+  useEffect(() => {
+    if (!formData.date) return;
+
+    const fetchScheduledTrips = async () => {
+      setLoadingTrips(true);
+      try {
+        const response = await fetch(
+          `/api/trips/by-date?date=${formData.date}`
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setScheduledTrips(data.trips || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch scheduled trips:", err);
+      } finally {
+        setLoadingTrips(false);
+      }
+    };
+
+    fetchScheduledTrips();
+  }, [formData.date]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,7 +235,7 @@ export default function RequestTrip() {
             </div>
           </div>
 
-          {/* Calendar Date Picker */}
+          {/* Date Picker */}
           <div>
             <label className="mb-4 block text-lg font-bold text-white">
               <Calendar className="mr-2 mb-2 inline" size={20} />
@@ -210,55 +246,25 @@ export default function RequestTrip() {
                 Loading dates...
               </div>
             ) : (
-              <div className="rounded-lg border border-gray-600 bg-[#0a2540] p-6">
-                {/* Month/Year header */}
-                <h3 className="mb-4 text-center font-bold text-white">
-                  {availability?.dates[0] 
-                    ? new Date(availability.dates[0].value).toLocaleDateString("en-US", {
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "Select Date"}
-                </h3>
-                
-                {/* Day headers */}
-                <div className="mb-3 grid grid-cols-7 gap-1">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="text-center text-xs font-bold text-gray-400 py-2">
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1">
-                  {availability?.dates.map((dateObj) => {
-                    const date = new Date(dateObj.value);
-                    const isSelected = formData.date === dateObj.value;
-                    
-                    return (
-                      <button
-                        key={dateObj.value}
-                        type="button"
-                        onClick={() =>
-                          setFormData({ ...formData, date: dateObj.value })
-                        }
-                        className={`aspect-square rounded-md text-sm font-medium transition-all ${
-                          isSelected
-                            ? "bg-[#f1c44f] text-[#071d3a] font-bold"
-                            : "bg-[#071d3a] text-gray-300 hover:bg-[#f1c44f]/20 border border-gray-700"
-                        }`}
-                      >
-                        {date.getDate()}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <select
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-600 bg-[#071d3a] px-4 py-2 text-white focus:border-[#f1c44f] focus:outline-none"
+                required
+              >
+                <option value="">Select a date</option>
+                {availability?.dates.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
 
-          {/* Time Grid Picker */}
+          {/* Time Picker */}
           <div>
             <label className="mb-4 block text-lg font-bold text-white">
               Select Departure Time
@@ -268,31 +274,66 @@ export default function RequestTrip() {
                 Loading times...
               </div>
             ) : (
-              <div className="rounded-lg border border-gray-600 bg-[#0a2540] p-6">
-                <div className="grid grid-cols-4 gap-2 md:grid-cols-5 lg:grid-cols-6">
-                  {availability?.times.map((timeObj) => {
-                    const isSelected = formData.time === timeObj.value;
-                    return (
-                      <button
-                        key={timeObj.value}
-                        type="button"
-                        onClick={() =>
-                          setFormData({ ...formData, time: timeObj.value })
-                        }
-                        className={`rounded-md px-3 py-2 text-sm font-medium transition-all ${
-                          isSelected
-                            ? "bg-[#f1c44f] text-[#071d3a] font-bold"
-                            : "bg-[#071d3a] text-gray-300 hover:bg-[#f1c44f]/20 border border-gray-700"
-                        }`}
-                      >
-                        {timeObj.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              <select
+                value={formData.time}
+                onChange={(e) =>
+                  setFormData({ ...formData, time: e.target.value })
+                }
+                className="w-full rounded-lg border border-gray-600 bg-[#071d3a] px-4 py-2 text-white focus:border-[#f1c44f] focus:outline-none"
+                required
+              >
+                {availability?.times.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
+
+          {/* Scheduled Trips for Selected Date */}
+          {formData.date && (
+            <div>
+              <label className="mb-4 block text-lg font-bold text-white">
+                Available Trips on {new Date(formData.date).toLocaleDateString()}
+              </label>
+              {loadingTrips ? (
+                <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
+                  <div className="flex items-center justify-center gap-2 text-gray-400">
+                    <Loader2 size={16} className="animate-spin" />
+                    Loading trips...
+                  </div>
+                </Card>
+              ) : scheduledTrips.length > 0 ? (
+                <div className="space-y-3">
+                  {scheduledTrips.map((trip) => (
+                    <Card
+                      key={trip.id}
+                      className="border-[#f1c44f]/20 bg-[#0a2540] p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-white">
+                            {trip.time} - {trip.van.name}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Driver: {trip.driver.name}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {trip.seatsAvailable} seats available
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
+                  <p className="text-gray-400">No scheduled trips on this date.</p>
+                </Card>
+              )}
+            </div>
+          )}
 
           {/* Seats Selection */}
           <div>
