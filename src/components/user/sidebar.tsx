@@ -3,8 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
+import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
 import {
   LayoutDashboard,
   Ticket,
@@ -40,8 +42,11 @@ const navigationItems = [
 export function LayoutSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleSignOut = async () => {
+    setIsLoggingOut(true);
     try {
       const response = await fetch("/api/auth/sign-out", {
         method: "POST",
@@ -51,7 +56,18 @@ export function LayoutSidebar() {
       }
     } catch (error) {
       console.error("Sign out failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+      setLogoutConfirmOpen(false);
     }
+  };
+
+  const handleConfirmLogout = () => {
+    void handleSignOut();
+  };
+
+  const handleCancelLogout = () => {
+    setLogoutConfirmOpen(false);
   };
 
   return (
@@ -119,13 +135,26 @@ export function LayoutSidebar() {
       <div className="space-y-4 border-t border-[#f1c44f]/20 p-6">
         <Separator className="bg-[#f1c44f]/20" />
         <Button
-          onClick={handleSignOut}
-          className="w-full gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+          onClick={() => setLogoutConfirmOpen(true)}
+          disabled={isLoggingOut}
+          className="w-full gap-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-50"
         >
           <LogOut size={20} />
           Sign Out
         </Button>
       </div>
+
+      <ConfirmationDialog
+        isOpen={logoutConfirmOpen}
+        title="Sign Out"
+        description="Are you sure you want to sign out? You will be logged out of your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        isDangerous={false}
+        isLoading={isLoggingOut}
+        onConfirm={handleConfirmLogout}
+        onCancel={handleCancelLogout}
+      />
     </aside>
   );
 }
