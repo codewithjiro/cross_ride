@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
-import { trips, adminLogs } from "~/server/db/schema";
+import { trips, bookings, adminLogs } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "~/lib/auth";
 import { checkConflicts } from "~/lib/conflicts";
@@ -14,6 +14,7 @@ interface UpdateTripRequest {
   arrivalTime?: string;
   seatsAvailable?: string | number;
   status?: string;
+  cancelReason?: string;
 }
 
 export async function PATCH(
@@ -31,6 +32,7 @@ export async function PATCH(
       arrivalTime,
       seatsAvailable,
       status,
+      cancelReason,
     } = (await req.json()) as UpdateTripRequest;
     const tripId = parseInt(id, 10);
 
@@ -90,12 +92,21 @@ export async function PATCH(
     if (seatsAvailable !== undefined)
       updateData.seatsAvailable = parseInt(String(seatsAvailable), 10);
     if (status !== undefined) updateData.status = status;
+    if (cancelReason !== undefined) updateData.cancelReason = cancelReason;
 
     const updatedTrip = await db
       .update(trips)
       .set(updateData)
       .where(eq(trips.id, tripId))
       .returning();
+
+    // If trip is being cancelled, also cancel all related bookings
+    if (status === "cancelled") {
+      await db
+        .update(bookings)
+        .set({ status: "cancelled" })
+        .where(eq(bookings.tripId, tripId));
+    }
 
     // Log the action
     await db.insert(adminLogs).values({

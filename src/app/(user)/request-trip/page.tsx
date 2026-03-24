@@ -897,7 +897,14 @@ export default function RequestTrip() {
                     month: "long",
                     day: "numeric",
                   })}{" "}
-                  at {formData.time}
+                  at{" "}
+                  {(() => {
+                    const [hours, minutes] = formData.time.split(":");
+                    const hour = parseInt(hours, 10);
+                    const ampm = hour >= 12 ? "PM" : "AM";
+                    const displayHour = hour % 12 || 12;
+                    return `${displayHour}:${minutes} ${ampm}`;
+                  })()}
                 </p>
                 <p>
                   <span className="text-gray-300">Seats Requested:</span>{" "}

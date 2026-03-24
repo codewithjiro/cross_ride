@@ -44,7 +44,12 @@ export default function BookingsPage() {
       const response = await fetch("/api/admin/bookings");
       const data = await response.json();
       if (response.ok) {
-        setBookings(data);
+        // Sort by newest first (descending order)
+        const sortedData = data.sort(
+          (a: BookingDetail, b: BookingDetail) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setBookings(sortedData);
       }
     } catch (error) {
       console.error("Failed to fetch bookings:", error);

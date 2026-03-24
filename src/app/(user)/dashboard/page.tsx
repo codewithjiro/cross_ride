@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
-import { MapPin, Calendar, Users } from "lucide-react";
+import { MapPin, Calendar, Users, Briefcase, CheckCircle2 } from "lucide-react";
 import { getCurrentUser } from "~/lib/auth";
 import { DashboardHeader } from "~/components/user/dashboard-header";
 
@@ -106,19 +106,28 @@ async function TripStats() {
   return (
     <>
       <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
-        <p className="text-sm text-gray-400">Total Bookings</p>
+        <div className="mb-3 flex items-center gap-3">
+          <Briefcase size={24} className="text-[#f1c44f]" />
+          <p className="text-sm text-gray-400">Total Bookings</p>
+        </div>
         <p className="text-4xl font-bold text-[#f1c44f]">
           {userBookings.length}
         </p>
       </Card>
       <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
-        <p className="text-sm text-gray-400">Approved Trips</p>
+        <div className="mb-3 flex items-center gap-3">
+          <CheckCircle2 size={24} className="text-green-400" />
+          <p className="text-sm text-gray-400">Approved Trips</p>
+        </div>
         <p className="text-4xl font-bold text-[#f1c44f]">
           {approvedBookings.length}
         </p>
       </Card>
       <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
-        <p className="text-sm text-gray-400">Total Seats Booked</p>
+        <div className="mb-3 flex items-center gap-3">
+          <Users size={24} className="text-blue-400" />
+          <p className="text-sm text-gray-400">Total Seats Booked</p>
+        </div>
         <p className="text-4xl font-bold text-[#f1c44f]">{totalSeatsBooked}</p>
       </Card>
     </>

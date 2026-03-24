@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "~/server/db";
-import { bookings, users } from "~/server/db/schema";
+import { bookings, users, trips } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function PATCH(
@@ -66,6 +66,14 @@ export async function PATCH(
       })
       .where(eq(bookings.id, bookingId))
       .returning();
+
+    // Also update the trip status to completed
+    if (booking.tripId) {
+      await db
+        .update(trips)
+        .set({ status: "completed" })
+        .where(eq(trips.id, booking.tripId));
+    }
 
     return NextResponse.json({
       success: true,

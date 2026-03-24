@@ -28,9 +28,6 @@ async function VansTable() {
               Capacity
             </th>
             <th className="px-6 py-3 text-left font-semibold text-[#f1c44f]">
-              Status
-            </th>
-            <th className="px-6 py-3 text-left font-semibold text-[#f1c44f]">
               Actions
             </th>
           </tr>
@@ -38,7 +35,7 @@ async function VansTable() {
         <tbody>
           {allVans.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
+              <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
                 No vans yet. Create one to get started.
               </td>
             </tr>
@@ -52,14 +49,6 @@ async function VansTable() {
                 <td className="px-6 py-4 text-gray-300">{van.plateNumber}</td>
                 <td className="px-6 py-4 text-gray-300">
                   {van.capacity} seats
-                </td>
-                <td className="px-6 py-4">
-                  <Badge
-                    variant={van.status === "active" ? "default" : "secondary"}
-                    className="bg-[#f1c44f]/20 text-[#f1c44f] capitalize"
-                  >
-                    {van.status}
-                  </Badge>
                 </td>
                 <td className="flex gap-2 px-6 py-4">
                   <button className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-500/20">

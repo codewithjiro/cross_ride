@@ -29,6 +29,8 @@ interface BookingCardProps {
   createdAt: Date;
   department: string;
   onCompleted?: () => void;
+  tripStatus?: string;
+  cancelReason?: string | null;
 }
 
 export function BookingCard({
@@ -43,6 +45,8 @@ export function BookingCard({
   createdAt,
   department,
   onCompleted,
+  tripStatus,
+  cancelReason,
 }: BookingCardProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -120,13 +124,40 @@ export function BookingCard({
                 ? "border border-green-500/30 bg-green-500/20 text-green-300"
                 : status === "pending"
                   ? "border border-yellow-500/30 bg-yellow-500/20 text-yellow-300"
-                  : "border border-red-500/30 bg-red-500/20 text-red-300"
+                  : status === "completed"
+                    ? "border border-blue-500/30 bg-blue-500/20 text-blue-300"
+                    : "border border-red-500/30 bg-red-500/20 text-red-300"
             }`}
           >
             {status}
           </Badge>
         </div>
       </div>
+
+      {/* Trip Cancellation Alert */}
+      {tripStatus === "cancelled" && cancelReason && (
+        <div className="border-b border-red-500/20 bg-red-500/10 px-6 py-4">
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 pt-0.5">
+              <svg
+                className="h-5 w-5 text-red-400"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-red-300">Trip Cancelled</h4>
+              <p className="mt-1 text-sm text-red-200">{cancelReason}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="px-6 py-4">
@@ -244,7 +275,7 @@ export function BookingCard({
             </Button>
           )}
 
-          {(status === "pending" || status === "approved") && (
+          {status === "pending" && (
             <Button
               onClick={() => setShowCancelConfirm(true)}
               variant="ghost"

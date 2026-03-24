@@ -121,6 +121,7 @@ export const trips = createTable(
     seatsAvailable: d.integer().notNull(),
     seatsReserved: d.integer().default(0).notNull(),
     status: tripStatusEnum("status").default("scheduled").notNull(),
+    cancelReason: d.text(),
     createdAt: d.timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: d.timestamp({ withTimezone: true }).defaultNow(),
   }),

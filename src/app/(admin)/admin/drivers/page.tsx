@@ -30,9 +30,6 @@ async function DriversTable() {
               License
             </th>
             <th className="px-6 py-3 text-left font-semibold text-[#f1c44f]">
-              Status
-            </th>
-            <th className="px-6 py-3 text-left font-semibold text-[#f1c44f]">
               Actions
             </th>
           </tr>
@@ -40,7 +37,7 @@ async function DriversTable() {
         <tbody>
           {allDrivers.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+              <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
                 No drivers yet. Add your first driver to get started.
               </td>
             </tr>
@@ -59,16 +56,6 @@ async function DriversTable() {
                 </td>
                 <td className="px-6 py-4 text-xs text-gray-300">
                   {driver.licenseNumber.slice(0, 6)}...
-                </td>
-                <td className="px-6 py-4">
-                  <Badge
-                    variant={
-                      driver.status === "active" ? "default" : "secondary"
-                    }
-                    className="bg-[#f1c44f]/20 text-[#f1c44f] capitalize"
-                  >
-                    {driver.status}
-                  </Badge>
                 </td>
                 <td className="flex gap-2 px-6 py-4">
                   <button className="rounded-lg p-2 text-blue-400 transition-colors hover:bg-blue-500/20">
