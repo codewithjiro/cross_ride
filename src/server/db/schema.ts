@@ -57,6 +57,7 @@ export const users = createTable(
     firstName: d.varchar({ length: 255 }),
     lastName: d.varchar({ length: 255 }),
     phoneNumber: d.varchar({ length: 20 }),
+    profileImage: d.varchar({ length: 500 }), // Uploadthing URL
     role: userRoleEnum("role").default("user").notNull(),
     createdAt: d.timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: d.timestamp({ withTimezone: true }).defaultNow(),

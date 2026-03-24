@@ -59,7 +59,7 @@ export function Sidebar() {
         method: "POST",
       });
       if (response.ok) {
-        router.push("/sign-in");
+        router.push("/");
       }
     } catch (error) {
       console.error("Sign out failed:", error);

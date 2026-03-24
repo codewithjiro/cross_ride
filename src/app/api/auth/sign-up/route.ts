@@ -8,12 +8,13 @@ interface SignUpRequest {
   password?: string;
   firstName?: string;
   lastName?: string;
+  phoneNumber?: string;
 }
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as SignUpRequest;
-    const { email, password, firstName, lastName } = body;
+    const { email, password, firstName, lastName, phoneNumber } = body;
 
     // Validate input
     if (!email || !password) {
@@ -48,6 +49,8 @@ export async function POST(req: Request) {
         password: hashedPassword,
         firstName: firstName ?? "",
         lastName: lastName ?? "",
+        phoneNumber: phoneNumber ?? "",
+        profileImage: "/profile/default_profile.jpg",
         role: "user",
       })
       .returning();

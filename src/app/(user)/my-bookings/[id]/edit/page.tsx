@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -47,11 +47,10 @@ const DEPARTMENTS = [
   "School of Computer Information Technology and Engineering",
   "School of Business and Accountancy",
   "Primary Education",
-  "Secondary Education",
-  "Senior Highschool Department",
+  "Secondary",
+  "Senior High Department",
 ];
 
-// Map van names to their images
 const getVanImage = (vanName: string): string => {
   if (vanName.includes("Grandia")) {
     return "/images/grandia.png";
@@ -60,7 +59,17 @@ const getVanImage = (vanName: string): string => {
   } else if (vanName.includes("Deluxe") || vanName.includes("Commuter")) {
     return "/images/deluxe.png";
   }
-  return "/images/deluxe.png"; // default fallback
+  return "/images/deluxe.png";
+};
+
+const parseRouteParts = (route: string | null | undefined) => {
+  if (!route) return { pickup: null, dropoff: null };
+  const pickupMatch = route.match(/Pickup:\s*(.*?)\s*→/);
+  const dropoffMatch = route.match(/→\s*Dropoff:\s*([^|]+)(?:\||$)/);
+  return {
+    pickup: pickupMatch?.[1]?.trim() || null,
+    dropoff: dropoffMatch?.[1]?.trim() || null,
+  };
 };
 
 interface AvailabilityData {
@@ -68,47 +77,62 @@ interface AvailabilityData {
   times: Array<{ value: string; label: string }>;
 }
 
-export default function RequestTrip() {
+interface BookingData {
+  vanId: number;
+  driverId: string;
+  date: string;
+  time: string;
+  seatsRequested: number;
+  department: string;
+}
+
+const RouteMap = dynamic(() => import("~/components/maps/route-map"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-gray-400">
+      Loading map...
+    </div>
+  ),
+});
+
+export default function EditBooking({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const bookingId = id;
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [availability, setAvailability] = useState<AvailabilityData | null>(
     null,
   );
-  const [loadingAvailability, setLoadingAvailability] = useState(true);
   const [unavailableVanIds, setUnavailableVanIds] = useState<number[]>([]);
   const [unavailableDriverIds, setUnavailableDriverIds] = useState<number[]>(
     [],
   );
 
-  const [pickupQuery, setPickupQuery] = useState(
-    "Holy Cross College, Santa Ana, Pampanga, 2022",
-  );
-  const [dropoffQuery, setDropoffQuery] = useState("");
-  const [pickupResults, setPickupResults] = useState<LocationResult[]>([]);
-  const [dropoffResults, setDropoffResults] = useState<LocationResult[]>([]);
-  const [selectedPickup, setSelectedPickup] = useState<LocationResult | null>({
-    label: "Holy Cross College Santa Ana Pampanga",
-    lat: 15.093701809054442,
-    lon: 120.769449501851,
-  });
-  const [selectedDropoff, setSelectedDropoff] = useState<LocationResult | null>(
-    null,
-  );
-  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [vans, setVans] = useState<
     Array<{ id: number; name: string; plateNumber: string; capacity: number }>
   >([]);
-  const [loadingVans, setLoadingVans] = useState(true);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
-  const RouteMap = dynamic(() => import("~/components/maps/route-map"), {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-full items-center justify-center text-sm text-gray-400">
-        Loading map...
-      </div>
-    ),
-  });
+  // Location state
+  const [pickupQuery, setPickupQuery] = useState("");
+  const [dropoffQuery, setDropoffQuery] = useState("");
+  const [pickupResults, setPickupResults] = useState<LocationResult[]>([]);
+  const [dropoffResults, setDropoffResults] = useState<LocationResult[]>([]);
+  const [selectedPickup, setSelectedPickup] = useState<LocationResult | null>(
+    null,
+  );
+  const [selectedDropoff, setSelectedDropoff] = useState<LocationResult | null>(
+    null,
+  );
+  const [currentRoute, setCurrentRoute] = useState("");
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
   const [formData, setFormData] = useState<BookingRequest>({
     vanId: "",
@@ -119,55 +143,104 @@ export default function RequestTrip() {
     department: "",
   });
 
-  const [calendarMonth, setCalendarMonth] = useState(new Date());
-
   const selectedVan = vans.find((v) => String(v.id) === formData.vanId);
   const selectedDriver = DRIVERS.find((d) => d.id === formData.driverId);
 
-  // Fetch availability from API
+  // Fetch booking details and availability
   useEffect(() => {
-    const fetchAvailability = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/bookings/availability");
-        const data = await response.json();
-        if (response.ok) {
-          setAvailability(data);
-          // Set first available date by default
-          if (data.dates.length > 0) {
-            setFormData((prev) => ({ ...prev, date: data.dates[0].value }));
+        // Fetch availability
+        const availRes = await fetch("/api/bookings/availability");
+        const availData = await availRes.json();
+        if (availRes.ok) {
+          setAvailability(availData);
+        }
+
+        // Fetch vans
+        const vansRes = await fetch("/api/vans");
+        const vansData = await vansRes.json();
+        if (vansRes.ok && Array.isArray(vansData.vans)) {
+          setVans(vansData.vans);
+        }
+
+        // Fetch booking details
+        const bookingRes = await fetch(`/api/bookings/${bookingId}`);
+        if (!bookingRes.ok) {
+          setError("Failed to load booking details");
+          return;
+        }
+        const bookingData = await bookingRes.json();
+
+        if (bookingData.status !== "pending") {
+          setError("You can only edit pending bookings");
+          return;
+        }
+
+        // Populate form with current data
+        if (!bookingData.trip || !bookingData.trip.departureTime) {
+          setError("Booking data is incomplete");
+          return;
+        }
+
+        const depTime = new Date(bookingData.trip.departureTime);
+        if (isNaN(depTime.getTime())) {
+          setError("Invalid booking date format");
+          return;
+        }
+
+        const dateStr = depTime.toISOString().split("T")[0] || "";
+        const timeStr = `${String(depTime.getHours()).padStart(2, "0")}:${String(depTime.getMinutes()).padStart(2, "0")}`;
+
+        setFormData({
+          vanId: String(bookingData.trip.vanId),
+          driverId: String(bookingData.trip.driverId),
+          date: dateStr,
+          time: timeStr,
+          seatsRequested: bookingData.seatsBooked,
+          department: bookingData.department,
+        });
+
+        // Set current route from trip and pre-fill locations
+        if (bookingData.trip.route) {
+          setCurrentRoute(bookingData.trip.route);
+
+          // Parse route to extract pickup and dropoff
+          const { pickup, dropoff } = parseRouteParts(bookingData.trip.route);
+
+          if (pickup) {
+            setPickupQuery(pickup);
+            setSelectedPickup({
+              label: pickup,
+              lat: 0,
+              lon: 0,
+            });
           }
-          // Set first available time by default
-          if (data.times.length > 0) {
-            setFormData((prev) => ({ ...prev, time: data.times[0].value }));
+
+          if (dropoff) {
+            setDropoffQuery(dropoff);
+            setSelectedDropoff({
+              label: dropoff,
+              lat: 0,
+              lon: 0,
+            });
           }
         }
+
+        // Set calendar to booking month
+        if (dateStr) {
+          setCalendarMonth(new Date(dateStr));
+        }
       } catch (err) {
-        console.error("Failed to fetch availability:", err);
+        setError("Failed to load booking data");
+        console.error(err);
       } finally {
-        setLoadingAvailability(false);
+        setLoading(false);
       }
     };
 
-    fetchAvailability();
-  }, []);
-
-  // Fetch active vans
-  useEffect(() => {
-    const loadVans = async () => {
-      try {
-        const res = await fetch("/api/vans");
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.vans)) {
-          setVans(data.vans);
-        }
-      } catch (err) {
-        console.error("Failed to load vans", err);
-      } finally {
-        setLoadingVans(false);
-      }
-    };
-    loadVans();
-  }, []);
+    fetchData();
+  }, [bookingId]);
 
   // Fetch unavailable vans and drivers for selected date
   useEffect(() => {
@@ -195,7 +268,7 @@ export default function RequestTrip() {
     fetchUnavailable();
   }, [formData.date]);
 
-  // Geocode helpers (debounced fetches)
+  // Geocode pickup location
   useEffect(() => {
     const controller = new AbortController();
     if (!pickupQuery || pickupQuery.length < 3) {
@@ -211,7 +284,7 @@ export default function RequestTrip() {
         const data = await res.json();
         if (res.ok) setPickupResults(data.results || []);
       } catch (err) {
-        if (err?.name !== "AbortError") {
+        if ((err as any)?.name !== "AbortError") {
           console.error("Pickup search failed", err);
         }
       }
@@ -222,6 +295,7 @@ export default function RequestTrip() {
     };
   }, [pickupQuery]);
 
+  // Geocode dropoff location
   useEffect(() => {
     const controller = new AbortController();
     if (!dropoffQuery || dropoffQuery.length < 3) {
@@ -274,74 +348,7 @@ export default function RequestTrip() {
     fetchRoute();
   }, [selectedPickup, selectedDropoff]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!formData.vanId || !formData.driverId || !formData.date) {
-      setError("Please select a van, driver, and date");
-      return;
-    }
-
-    if (!formData.department) {
-      setError("Please select your department");
-      return;
-    }
-
-    if (!selectedPickup || !selectedDropoff) {
-      setError("Please select pickup and destination from suggestions");
-      return;
-    }
-
-    if (formData.seatsRequested < 1) {
-      setError("Please select at least 1 seat");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Combine date and time: "2026-03-20" + "08:00" = "2026-03-20T08:00"
-      const dateTimeString = `${formData.date}T${formData.time}`;
-      const depDateTime = new Date(dateTimeString);
-      const arrDateTime = new Date(depDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
-
-      const response = await fetch("/api/bookings/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vanId: parseInt(formData.vanId),
-          driverId: parseInt(formData.driverId),
-          route:
-            `Pickup: ${selectedPickup.label} → Dropoff: ${selectedDropoff.label}` +
-            (routeInfo
-              ? ` | Distance: ${routeInfo.distanceKm} km, ETA: ${routeInfo.durationMin} mins`
-              : ""),
-          department: formData.department,
-          departureTime: depDateTime.toISOString(),
-          arrivalTime: arrDateTime.toISOString(),
-          seatsRequested: formData.seatsRequested,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Failed to create booking request");
-        return;
-      }
-
-      // Success - redirect to my bookings
-      router.push("/my-bookings?success=true");
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Calendar helper functions
+  // Calendar functions
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -384,14 +391,92 @@ export default function RequestTrip() {
     );
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.vanId || !formData.driverId || !formData.date) {
+      setError("Please select a van, driver, and date");
+      return;
+    }
+
+    if (!formData.department) {
+      setError("Please select your department");
+      return;
+    }
+
+    if (!selectedPickup || !selectedDropoff) {
+      setError("Please select both pickup and dropoff locations");
+      return;
+    }
+
+    if (formData.seatsRequested < 1) {
+      setError("Please select at least 1 seat");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const dateTimeString = `${formData.date}T${formData.time}`;
+      const depDateTime = new Date(dateTimeString);
+      const arrDateTime = new Date(depDateTime.getTime() + 2 * 60 * 60 * 1000);
+
+      const routeString = `${selectedPickup.label} to ${selectedDropoff.label}`;
+
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vanId: parseInt(formData.vanId),
+          driverId: parseInt(formData.driverId),
+          department: formData.department,
+          departureTime: depDateTime.toISOString(),
+          arrivalTime: arrDateTime.toISOString(),
+          seatsRequested: formData.seatsRequested,
+          route: routeString,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to update booking");
+        return;
+      }
+
+      // Success - redirect back to details
+      router.push(`/my-bookings/${bookingId}`);
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error(err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#071d3a]">
+        <p className="text-white">Loading booking...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#071d3a] p-8">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white">Request a Trip</h1>
+          <Link
+            href="/my-bookings"
+            className="mb-4 inline-flex items-center text-sm text-gray-300 hover:text-white"
+          >
+            <ArrowLeft size={16} className="mr-2" /> Back to My Bookings
+          </Link>
+          <h1 className="text-4xl font-bold text-white">Edit Booking</h1>
           <p className="mt-2 text-gray-400">
-            Book a van and driver for your transportation needs
+            Update your trip details (only pending bookings can be edited)
           </p>
         </div>
 
@@ -424,19 +509,93 @@ export default function RequestTrip() {
             </select>
           </Card>
 
+          {/* Locations - 2 Column Grid */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
+              <p className="text-sm font-semibold text-white">
+                Pickup Location
+              </p>
+              <input
+                value={pickupQuery}
+                onChange={(e) => {
+                  setPickupQuery(e.target.value);
+                }}
+                placeholder="Search address or place"
+                className="mt-2 w-full rounded-lg border border-gray-600 bg-[#071d3a] px-3 py-2 text-white placeholder-gray-500 focus:border-[#f1c44f] focus:outline-none"
+              />
+              {selectedPickup && (
+                <p className="mt-2 text-xs text-green-300">
+                  Selected: {selectedPickup.label}
+                </p>
+              )}
+              {!selectedPickup && pickupResults.length > 0 && (
+                <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded border border-gray-700 bg-[#0b2a4a] p-2">
+                  {pickupResults.map((r, i) => (
+                    <button
+                      key={`pickup-${i}-${r.lat}-${r.lon}`}
+                      type="button"
+                      className="block w-full text-left text-xs text-gray-200 hover:text-[#f1c44f]"
+                      onClick={() => {
+                        setSelectedPickup(r);
+                        setPickupQuery(r.label);
+                        setPickupResults([]);
+                      }}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
+              <p className="text-sm font-semibold text-white">Destination</p>
+              <input
+                value={dropoffQuery}
+                onChange={(e) => {
+                  setDropoffQuery(e.target.value);
+                }}
+                placeholder="Search address or place"
+                className="mt-2 w-full rounded-lg border border-gray-600 bg-[#071d3a] px-3 py-2 text-white placeholder-gray-500 focus:border-[#f1c44f] focus:outline-none"
+              />
+              {selectedDropoff && (
+                <p className="mt-2 text-xs text-green-300">
+                  Selected: {selectedDropoff.label}
+                </p>
+              )}
+              {!selectedDropoff && dropoffResults.length > 0 && (
+                <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded border border-gray-700 bg-[#0b2a4a] p-2">
+                  {dropoffResults.map((r, i) => (
+                    <button
+                      key={`dropoff-${i}-${r.lat}-${r.lon}`}
+                      type="button"
+                      className="block w-full text-left text-xs text-gray-200 hover:text-[#f1c44f]"
+                      onClick={() => {
+                        setSelectedDropoff(r);
+                        setDropoffQuery(r.label);
+                        setDropoffResults([]);
+                      }}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
+
           {/* Date Picker */}
           <div>
             <label className="mb-4 block text-lg font-bold text-white">
               <Calendar className="mr-2 mb-2 inline" size={20} />
               Select Departure Date
             </label>
-            {loadingAvailability ? (
+            {!availability ? (
               <div className="rounded-lg border border-gray-600 bg-[#071d3a] px-4 py-2 text-gray-400">
                 Loading dates...
               </div>
             ) : (
               <div>
-                {/* Selected Date Display */}
                 <div className="mb-4 rounded-lg border-2 border-[#f1c44f]/30 bg-[#0a2540] p-4">
                   {formData.date ? (
                     <p className="text-lg font-semibold text-white">
@@ -447,9 +606,7 @@ export default function RequestTrip() {
                   )}
                 </div>
 
-                {/* Calendar */}
                 <div className="rounded-lg border-2 border-[#f1c44f]/20 bg-[#0a2540] p-6">
-                  {/* Month/Year Header */}
                   <div className="mb-6 flex items-center justify-between">
                     <button
                       type="button"
@@ -473,7 +630,6 @@ export default function RequestTrip() {
                     </button>
                   </div>
 
-                  {/* Days of Week */}
                   <div className="mb-2 grid grid-cols-7 gap-2 text-center">
                     {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                       <div
@@ -485,43 +641,41 @@ export default function RequestTrip() {
                     ))}
                   </div>
 
-                  {/* Calendar Days */}
                   <div className="grid grid-cols-7 gap-2">
                     {Array.from({
                       length: getFirstDayOfMonth(calendarMonth),
                     }).map((_, i) => (
                       <div key={`empty-${i}`} className="h-10" />
                     ))}
-                    {Array.from({ length: getDaysInMonth(calendarMonth) }).map(
-                      (_, i) => {
-                        const day = i + 1;
-                        const available = isDateAvailable(day);
-                        const dateStr = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                        const isSelected = formData.date === dateStr;
+                    {Array.from({
+                      length: getDaysInMonth(calendarMonth),
+                    }).map((_, i) => {
+                      const day = i + 1;
+                      const available = isDateAvailable(day);
+                      const dateStr = `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const isSelected = formData.date === dateStr;
 
-                        return (
-                          <button
-                            key={day}
-                            type="button"
-                            onClick={() => handleDateSelect(day)}
-                            disabled={!available}
-                            className={`flex h-10 items-center justify-center rounded-lg text-sm font-semibold transition-all ${
-                              isSelected
-                                ? "bg-[#f1c44f] text-[#071d3a]"
-                                : available
-                                  ? "cursor-pointer border border-[#f1c44f]/30 text-white hover:border-[#f1c44f] hover:bg-[#f1c44f]/10"
-                                  : "cursor-not-allowed text-gray-600"
-                            }`}
-                          >
-                            {day}
-                          </button>
-                        );
-                      },
-                    )}
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => handleDateSelect(day)}
+                          disabled={!available}
+                          className={`flex h-10 items-center justify-center rounded-lg text-sm font-semibold transition-all ${
+                            isSelected
+                              ? "bg-[#f1c44f] text-[#071d3a]"
+                              : available
+                                ? "cursor-pointer border border-[#f1c44f]/30 text-white hover:border-[#f1c44f] hover:bg-[#f1c44f]/10"
+                                : "cursor-not-allowed text-gray-600"
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Reminder Message */}
                 <div className="mt-4 flex items-start gap-2 rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
                   <Info
                     size={18}
@@ -541,13 +695,12 @@ export default function RequestTrip() {
             <label className="mb-4 block text-lg font-bold text-white">
               Select Departure Time
             </label>
-            {loadingAvailability ? (
+            {!availability ? (
               <div className="rounded-lg border border-gray-600 bg-[#071d3a] px-4 py-2 text-gray-400">
                 Loading times...
               </div>
             ) : (
               <div>
-                {/* Selected Time Display */}
                 <div className="mb-4 rounded-lg border-2 border-[#f1c44f]/30 bg-[#0a2540] p-4">
                   {formData.time ? (
                     <p className="text-lg font-semibold text-white">
@@ -560,7 +713,6 @@ export default function RequestTrip() {
                   )}
                 </div>
 
-                {/* Time Grid */}
                 <div className="grid gap-3 sm:grid-cols-4 lg:grid-cols-5">
                   {availability?.times.map((time) => {
                     const isSelected = formData.time === time.value;
@@ -594,8 +746,7 @@ export default function RequestTrip() {
               Select a Van
             </label>
             <div className="grid gap-4 md:grid-cols-3">
-              {(loadingVans ? [] : vans).map((van) => {
-                // Van is unavailable only if it has a trip on the SELECTED date
+              {vans.map((van) => {
                 const isUnavailableOnSelectedDate =
                   formData.date && unavailableVanIds.includes(van.id);
 
@@ -632,9 +783,6 @@ export default function RequestTrip() {
                           <Users size={16} />
                           {van.capacity} seats · Plate {van.plateNumber}
                         </div>
-                        <p className="mt-2 text-xs text-gray-500">
-                          {van.description}
-                        </p>
                         {isUnavailableOnSelectedDate && (
                           <p className="mt-2 text-xs font-semibold text-red-400">
                             ❌ Not available on{" "}
@@ -701,7 +849,7 @@ export default function RequestTrip() {
             </div>
           </div>
 
-          {/* Seats Selection */}
+          {/* Number of Seats */}
           <div>
             <label className="mb-4 block text-lg font-bold text-white">
               <Users className="mr-2 mb-2 inline" size={20} />
@@ -713,7 +861,6 @@ export default function RequestTrip() {
               </div>
             ) : (
               <div>
-                {/* Selected Seats Display */}
                 <div className="mb-4 rounded-lg border-2 border-[#f1c44f]/30 bg-[#0a2540] p-4">
                   <p className="text-lg font-semibold text-white">
                     {formData.seatsRequested}{" "}
@@ -724,7 +871,6 @@ export default function RequestTrip() {
                   </p>
                 </div>
 
-                {/* Seats Grid */}
                 <div className="grid gap-2 sm:grid-cols-6 lg:grid-cols-8">
                   {Array.from({ length: selectedVan.capacity }, (_, i) => {
                     const seatNumber = i + 1;
@@ -755,100 +901,7 @@ export default function RequestTrip() {
             )}
           </div>
 
-          {/* Locations */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
-              <p className="text-sm font-semibold text-white">
-                Pickup Location
-              </p>
-              <input
-                value={pickupQuery}
-                onChange={(e) => {
-                  setPickupQuery(e.target.value);
-                  setSelectedPickup(null);
-                }}
-                placeholder="Search address or place"
-                className="mt-2 w-full rounded-lg border border-gray-600 bg-[#071d3a] px-3 py-2 text-white focus:border-[#f1c44f] focus:outline-none"
-              />
-              {selectedPickup && (
-                <p className="mt-2 text-xs text-green-300">
-                  Selected: {selectedPickup.label}
-                </p>
-              )}
-              {!selectedPickup && pickupResults.length > 0 && (
-                <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded border border-gray-700 bg-[#0b2a4a] p-2">
-                  {pickupResults.map((r, i) => (
-                    <button
-                      key={`pickup-${i}-${r.lat}-${r.lon}`}
-                      type="button"
-                      className="block w-full text-left text-xs text-gray-200 hover:text-[#f1c44f]"
-                      onClick={() => {
-                        setSelectedPickup(r);
-                        setPickupQuery(r.label);
-                        setPickupResults([]);
-                      }}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
-              <p className="text-sm font-semibold text-white">Destination</p>
-              <input
-                value={dropoffQuery}
-                onChange={(e) => {
-                  setDropoffQuery(e.target.value);
-                  setSelectedDropoff(null);
-                }}
-                placeholder="Search destination"
-                className="mt-2 w-full rounded-lg border border-gray-600 bg-[#071d3a] px-3 py-2 text-white focus:border-[#f1c44f] focus:outline-none"
-              />
-              {selectedDropoff && (
-                <p className="mt-2 text-xs text-green-300">
-                  Selected: {selectedDropoff.label}
-                </p>
-              )}
-              {!selectedDropoff && dropoffResults.length > 0 && (
-                <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded border border-gray-700 bg-[#0b2a4a] p-2">
-                  {dropoffResults.map((r, i) => (
-                    <button
-                      key={`dropoff-${i}-${r.lat}-${r.lon}`}
-                      type="button"
-                      className="block w-full text-left text-xs text-gray-200 hover:text-[#f1c44f]"
-                      onClick={() => {
-                        setSelectedDropoff(r);
-                        setDropoffQuery(r.label);
-                        setDropoffResults([]);
-                      }}
-                    >
-                      {r.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {routeInfo && (
-            <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
-              <p className="text-sm text-gray-300">
-                Estimated route:{" "}
-                <span className="font-semibold text-white">
-                  {routeInfo.distanceKm} km
-                </span>{" "}
-                ·
-                <span className="font-semibold text-white">
-                  {" "}
-                  {routeInfo.durationMin} mins
-                </span>
-              </p>
-            </Card>
-          )}
-
-          {/* Map Preview (Leaflet with OSM tiles + polyline) */}
+          {/* Route Preview */}
           {selectedPickup && selectedDropoff && routeInfo && (
             <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-4">
               <p className="mb-3 text-sm font-semibold text-white">
@@ -880,7 +933,7 @@ export default function RequestTrip() {
           {/* Summary */}
           {selectedVan && selectedDriver && formData.date && (
             <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
-              <h3 className="mb-4 font-bold text-white">Request Summary</h3>
+              <h3 className="mb-4 font-bold text-white">Edit Summary</h3>
               <div className="space-y-2 text-sm text-gray-400">
                 <p>
                   <span className="text-gray-300">Van:</span> {selectedVan.name}
@@ -903,33 +956,37 @@ export default function RequestTrip() {
                   <span className="text-gray-300">Seats Requested:</span>{" "}
                   {formData.seatsRequested}
                 </p>
+                <p>
+                  <span className="text-gray-300">Department:</span>{" "}
+                  {formData.department}
+                </p>
               </div>
             </Card>
           )}
 
-          {/* Submit Button */}
+          {/* Actions */}
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="flex-1 bg-[#f1c44f] font-semibold text-[#071d3a] hover:bg-[#f1c44f]/90"
             >
-              {loading ? (
+              {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
+                  Updating...
                 </>
               ) : (
-                "Submit Request"
+                "Save Changes"
               )}
             </Button>
 
             <Button
               type="button"
-              onClick={() => router.back()}
+              asChild
               className="border border-gray-600 bg-transparent text-white hover:bg-gray-600/20"
             >
-              Cancel
+              <Link href="/my-bookings">Cancel</Link>
             </Button>
           </div>
         </form>

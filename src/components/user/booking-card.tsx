@@ -5,7 +5,17 @@ import Link from "next/link";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
-import { MapPin, Calendar, Users, Trash2, CheckCircle2 } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Users,
+  Trash2,
+  CheckCircle2,
+  Truck,
+  Clock,
+  Building2,
+  Pencil,
+} from "lucide-react";
 
 interface BookingCardProps {
   id: number;
@@ -91,105 +101,184 @@ export function BookingCard({
   };
 
   return (
-    <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex-1">
-          <div className="flex items-start gap-3">
-            <MapPin className="mt-1 text-[#f1c44f]" size={20} />
-            <div>
-              <h3 className="text-xl font-bold text-white">{route}</h3>
-              <p className="mt-1 text-sm text-gray-400">
-                Driver: {driverName || "Unknown"}
-              </p>
+    <Card className="overflow-hidden border-[#f1c44f]/20 bg-gradient-to-br from-[#0a2540] to-[#051a2f] p-0 shadow-lg transition-all hover:border-[#f1c44f]/40 hover:shadow-xl hover:shadow-[#f1c44f]/10">
+      {/* Header Section with Status */}
+      <div className="border-b border-[#f1c44f]/10 bg-[#0f2d4a] px-6 py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 text-sm font-semibold tracking-wider text-[#f1c44f] uppercase">
+              <MapPin size={16} />
+              Route
             </div>
+            <h3 className="mt-2 text-xl leading-tight font-bold text-white">
+              {route}
+            </h3>
           </div>
-
-          <div className="mt-4 ml-8 grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Calendar size={16} />
-              {new Date(departureTime).toLocaleString()}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Users size={16} />
-              {seatsBooked} seat{seatsBooked !== 1 ? "s" : ""} booked
-            </div>
-          </div>
-
-          <div className="mt-4 ml-8">
-            <p className="text-sm text-gray-400">
-              Van: {vanName} ({plateNumber})
-            </p>
-            {department && (
-              <p className="mt-1 text-sm text-gray-300">
-                Department: {department}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-gray-500">
-              Booked on {new Date(createdAt).toLocaleDateString()}
-            </p>
-            {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-3">
           <Badge
-            className={`capitalize ${
+            className={`px-3 py-1 text-sm font-semibold whitespace-nowrap capitalize ${
               status === "approved"
-                ? "bg-green-500/20 text-green-400"
+                ? "border border-green-500/30 bg-green-500/20 text-green-300"
                 : status === "pending"
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : "bg-red-500/20 text-red-400"
+                  ? "border border-yellow-500/30 bg-yellow-500/20 text-yellow-300"
+                  : "border border-red-500/30 bg-red-500/20 text-red-300"
             }`}
           >
             {status}
           </Badge>
-          <Button
-            asChild
-            variant="outline"
-            className="border-gray-600/60 bg-[#0f2d4a] text-white hover:bg-[#12335b]"
-          >
-            <Link href={`/my-bookings/${id}`}>View Details</Link>
-          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="px-6 py-4">
+        {/* Driver Info */}
+        <div className="mb-6 flex items-center gap-3 border-b border-[#f1c44f]/10 pb-4 text-gray-300">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1c44f]/20">
+            <Users size={18} className="text-[#f1c44f]" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Driver
+            </p>
+            <p className="text-sm font-semibold text-white">{driverName}</p>
+          </div>
+        </div>
+
+        {/* Details Grid */}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          {/* Date & Time */}
+          <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/50 p-3">
+            <p className="mb-1 flex items-center gap-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <Clock size={12} />
+              Departure
+            </p>
+            <p className="text-sm font-semibold text-white">
+              {new Date(departureTime).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </p>
+            <p className="text-xs text-[#f1c44f]">
+              {new Date(departureTime).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </p>
+          </div>
+
+          {/* Seats */}
+          <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/50 p-3">
+            <p className="mb-1 flex items-center gap-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <Users size={12} />
+              Seats
+            </p>
+            <p className="text-sm font-semibold text-white">{seatsBooked}</p>
+            <p className="text-xs text-gray-500">
+              {seatsBooked === 1 ? "seat" : "seats"} booked
+            </p>
+          </div>
+
+          {/* Van */}
+          <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/50 p-3">
+            <p className="mb-1 flex items-center gap-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <Truck size={12} />
+              Van
+            </p>
+            <p className="text-sm font-semibold text-white">{vanName}</p>
+            <p className="text-xs text-[#f1c44f]">{plateNumber}</p>
+          </div>
+
+          {/* Department */}
+          <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/50 p-3">
+            <p className="mb-1 flex items-center gap-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <Building2 size={12} />
+              Dept
+            </p>
+            <p className="truncate text-sm font-semibold text-white">
+              {department ? department.split(" ").slice(0, 2).join(" ") : "N/A"}
+            </p>
+            <p className="text-xs text-gray-500">
+              Booked {new Date(createdAt).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-300">
+            {error}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-between gap-3 border-t border-[#f1c44f]/10 bg-[#0f2d4a] px-6 py-4">
+        <Button
+          asChild
+          variant="outline"
+          className="border-[#f1c44f]/30 bg-[#0a2540] font-semibold text-white hover:border-[#f1c44f]/50 hover:bg-[#0a2540]/80"
+        >
+          <Link href={`/my-bookings/${id}`}>View Details</Link>
+        </Button>
+
+        <div className="flex items-center gap-2">
+          {status === "pending" && (
+            <Button
+              asChild
+              className="gap-2 bg-[#f1c44f] font-semibold text-[#071d3a] hover:bg-[#f1c44f]/90"
+            >
+              <Link href={`/my-bookings/${id}/edit`}>
+                <Pencil size={16} />
+                Edit
+              </Link>
+            </Button>
+          )}
+
+          {status === "approved" && (
+            <Button
+              onClick={handleMarkCompleted}
+              disabled={loading}
+              className="gap-2 bg-green-600/80 font-semibold text-white hover:bg-green-600"
+            >
+              <CheckCircle2 size={16} />
+              {loading ? "Marking..." : "Complete"}
+            </Button>
+          )}
+
           {(status === "pending" || status === "approved") && (
             <Button
               onClick={() => setShowCancelConfirm(true)}
               variant="ghost"
-              className="gap-2 text-red-400 hover:text-red-300"
+              className="gap-2 font-semibold text-red-400 hover:bg-red-600/20 hover:text-red-300"
               disabled={loading}
             >
               <Trash2 size={16} />
               Cancel
             </Button>
           )}
-          {status === "approved" && (
-            <Button
-              onClick={handleMarkCompleted}
-              disabled={loading}
-              className="gap-2 bg-green-600/20 text-green-400 hover:bg-green-600/40"
-            >
-              <CheckCircle2 size={16} />
-              {loading ? "Marking..." : "Mark Complete"}
-            </Button>
-          )}
+
           {status !== "pending" && status !== "approved" && (
-            <p className="text-xs text-gray-500">In trip history</p>
+            <p className="text-xs text-gray-500 italic">In history</p>
           )}
         </div>
       </div>
 
       {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-lg border border-[#f1c44f]/30 bg-[#0a2540] p-6 shadow-xl">
-            <h4 className="text-lg font-bold text-white">Cancel booking?</h4>
-            <p className="mt-2 text-sm text-gray-300">
-              This will free your reserved seats and move the booking to
-              history. You can rebook later if slots are available.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-[#f1c44f]/30 bg-gradient-to-br from-[#0a2540] to-[#051a2f] p-6 shadow-2xl">
+            <h4 className="text-lg font-bold text-white">Cancel Booking?</h4>
+            <p className="mt-3 text-sm leading-relaxed text-gray-300">
+              This will free your reserved seats and move the booking to your
+              trip history. You can rebook later if slots are available.
             </p>
-            {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+            {error && (
+              <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-xs text-red-300">
+                {error}
+              </div>
+            )}
             <div className="mt-6 flex justify-end gap-3">
               <Button
                 variant="outline"
-                className="border-gray-500/50 text-gray-200"
+                className="border-[#f1c44f]/30 font-semibold text-white hover:bg-[#f1c44f]/10"
                 onClick={() => setShowCancelConfirm(false)}
                 disabled={loading}
               >
@@ -198,7 +287,7 @@ export function BookingCard({
               <Button
                 onClick={handleCancelBooking}
                 disabled={loading}
-                className="bg-red-600/80 text-white hover:bg-red-600"
+                className="bg-red-600/80 font-semibold text-white hover:bg-red-600"
               >
                 {loading ? "Cancelling..." : "Confirm Cancel"}
               </Button>

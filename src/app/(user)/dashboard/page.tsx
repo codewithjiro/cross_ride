@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { MapPin, Calendar, Users } from "lucide-react";
 import { getCurrentUser } from "~/lib/auth";
+import { DashboardHeader } from "~/components/user/dashboard-header";
 
 async function UpcomingBookings() {
   const user = await getCurrentUser();
@@ -52,7 +53,14 @@ async function UpcomingBookings() {
                     <Calendar size={16} />
                     {new Date(
                       booking.trip?.departureTime || "",
-                    ).toLocaleString()}
+                    ).toLocaleString("en-US", {
+                      month: "numeric",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
                   </div>
                   <div className="flex items-center gap-2 text-gray-400">
                     <Users size={16} />
@@ -121,12 +129,7 @@ export default function UserDashboard() {
     <div className="min-h-screen bg-[#071d3a] p-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white">Welcome Back!</h1>
-          <p className="mt-2 text-gray-400">
-            Manage your bookings and explore available trips
-          </p>
-        </div>
+        <DashboardHeader />
 
         {/* Stats */}
         <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">

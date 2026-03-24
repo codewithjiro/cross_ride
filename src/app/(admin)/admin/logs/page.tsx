@@ -68,7 +68,14 @@ async function LogsTable() {
                   {log.description}
                 </td>
                 <td className="px-6 py-4 text-xs text-gray-400">
-                  {new Date(log.createdAt).toLocaleString()}
+                  {new Date(log.createdAt).toLocaleString("en-US", {
+                    month: "numeric",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
                 </td>
               </tr>
             ))

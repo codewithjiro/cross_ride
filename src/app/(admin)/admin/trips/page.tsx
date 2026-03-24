@@ -65,7 +65,14 @@ async function TripsTable() {
                 <td className="px-6 py-4 text-gray-300">{trip.van?.name}</td>
                 <td className="px-6 py-4 text-gray-300">{trip.driver?.name}</td>
                 <td className="px-6 py-4 text-xs text-gray-300">
-                  {new Date(trip.departureTime).toLocaleString()}
+                  {new Date(trip.departureTime).toLocaleString("en-US", {
+                    month: "numeric",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
                 </td>
                 <td className="flex items-center gap-2 px-6 py-4 text-gray-300">
                   <Users size={16} />

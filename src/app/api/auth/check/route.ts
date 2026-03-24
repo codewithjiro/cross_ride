@@ -32,6 +32,7 @@ export async function GET() {
         firstName: user.firstName,
         lastName: user.lastName,
         phoneNumber: user.phoneNumber,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
       },
     });

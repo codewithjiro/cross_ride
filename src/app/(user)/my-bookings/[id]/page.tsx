@@ -15,6 +15,7 @@ import {
   Clock,
   ArrowLeft,
   Building2,
+  Pencil,
 } from "lucide-react";
 import RoutePreview from "./route-preview";
 
@@ -33,12 +34,13 @@ function parseRouteParts(route: string | null | undefined) {
 export default async function BookingDetail({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const user = await getCurrentUser();
   if (!user) notFound();
 
-  const bookingId = Number(params.id);
+  const bookingId = Number(id);
   if (Number.isNaN(bookingId)) notFound();
 
   const booking = await db.query.bookings.findFirst({
@@ -67,19 +69,29 @@ export default async function BookingDetail({
           >
             <ArrowLeft size={16} className="mr-2" /> Back to My Bookings
           </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-white">Trip Details</h1>
-            <Badge
-              className={`text-sm capitalize ${
-                booking.status === "approved"
-                  ? "bg-green-500/20 text-green-400"
-                  : booking.status === "pending"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : "bg-red-500/20 text-red-400"
-              }`}
-            >
-              {booking.status}
-            </Badge>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-white">Trip Details</h1>
+              <Badge
+                className={`text-sm capitalize ${
+                  booking.status === "approved"
+                    ? "bg-green-500/20 text-green-400"
+                    : booking.status === "pending"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-red-500/20 text-red-400"
+                }`}
+              >
+                {booking.status}
+              </Badge>
+            </div>
+            {booking.status === "pending" && (
+              <Link href={`/my-bookings/${booking.id}/edit`}>
+                <Button className="gap-2 bg-[#f1c44f] font-semibold text-[#071d3a] hover:bg-[#f1c44f]/90">
+                  <Pencil size={16} />
+                  Edit Booking
+                </Button>
+              </Link>
+            )}
           </div>
           <p className="mt-2 flex items-center gap-2 text-gray-300">
             <MapPin size={16} className="text-[#f1c44f]" />
@@ -95,14 +107,28 @@ export default async function BookingDetail({
                 <Calendar size={16} />
                 Departure:{" "}
                 {booking.trip?.departureTime
-                  ? new Date(booking.trip.departureTime).toLocaleString()
+                  ? new Date(booking.trip.departureTime).toLocaleString("en-US", {
+                      month: "numeric",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
                   : "TBD"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <Clock size={16} />
                 Arrival:{" "}
                 {booking.trip?.arrivalTime
-                  ? new Date(booking.trip.arrivalTime).toLocaleString()
+                  ? new Date(booking.trip.arrivalTime).toLocaleString("en-US", {
+                      month: "numeric",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
                   : "TBD"}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
@@ -116,7 +142,14 @@ export default async function BookingDetail({
               <p className="text-xs text-gray-500">
                 Booked on{" "}
                 {booking.createdAt
-                  ? new Date(booking.createdAt).toLocaleString()
+                  ? new Date(booking.createdAt).toLocaleString("en-US", {
+                      month: "numeric",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
                   : ""}
               </p>
             </div>

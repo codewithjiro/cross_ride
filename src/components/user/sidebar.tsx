@@ -5,7 +5,14 @@ import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { LayoutDashboard, Ticket, History, User, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Ticket,
+  History,
+  User,
+  LogOut,
+  Plus,
+} from "lucide-react";
 
 const navigationItems = [
   {
@@ -40,7 +47,7 @@ export function LayoutSidebar() {
         method: "POST",
       });
       if (response.ok) {
-        router.push("/sign-in");
+        router.push("/");
       }
     } catch (error) {
       console.error("Sign out failed:", error);
@@ -91,6 +98,21 @@ export function LayoutSidebar() {
             </Link>
           );
         })}
+
+        {/* Request Trip Button - Below Profile */}
+        <Link href="/request-trip" className="block pt-4">
+          <Button
+            variant="ghost"
+            className={`w-full justify-center gap-2 font-semibold ${
+              pathname === "/request-trip"
+                ? "bg-[#f1c44f] text-[#071d3a] hover:bg-[#f1c44f]/90"
+                : "text-gray-400 hover:bg-[#f1c44f]/10 hover:text-white"
+            }`}
+          >
+            <Plus size={20} />
+            Request a Trip
+          </Button>
+        </Link>
       </nav>
 
       {/* Footer */}
