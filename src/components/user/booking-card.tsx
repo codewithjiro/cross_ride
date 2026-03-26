@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
+import { DRIVERS } from "~/lib/data";
 import {
   MapPin,
   Calendar,
@@ -162,16 +163,37 @@ export function BookingCard({
       {/* Main Content */}
       <div className="px-6 py-4">
         {/* Driver Info */}
-        <div className="mb-6 flex items-center gap-3 border-b border-[#f1c44f]/10 pb-4 text-gray-300">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1c44f]/20">
-            <Users size={18} className="text-[#f1c44f]" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
-              Driver
-            </p>
-            <p className="text-sm font-semibold text-white">{driverName}</p>
-          </div>
+        <div className="mb-6 flex items-center gap-4 border-b border-[#f1c44f]/10 pb-4">
+          {(() => {
+            const driver = DRIVERS.find((d) => d.name === driverName);
+            return (
+              <>
+                <div className="flex-shrink-0">
+                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-gray-800">
+                    {driver?.image ? (
+                      <img
+                        src={driver.image}
+                        alt={driverName}
+                        className="h-16 w-16 object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center bg-[#f1c44f]/20">
+                        <Users size={24} className="text-[#f1c44f]" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    Driver
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {driverName}
+                  </p>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Details Grid */}

@@ -679,14 +679,25 @@ export default function RequestTrip() {
                       setFormData({ ...formData, driverId: driver.id })
                     }
                   >
-                    <h3 className="font-bold text-white">{driver.name}</h3>
-                    <p className="text-sm text-gray-400">{driver.role}</p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {driver.experience} experience
-                    </p>
-                    <p className="text-xs text-[#f1c44f]">
-                      {driver.specialization}
-                    </p>
+                    <div className="flex items-center gap-4">
+                      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+                        <img
+                          src={driver.image}
+                          alt={driver.name}
+                          className="h-20 w-20 object-cover"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-white">{driver.name}</h3>
+                        <p className="text-sm text-gray-400">{driver.role}</p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {driver.experience} experience
+                        </p>
+                        <p className="text-xs text-[#f1c44f]">
+                          {driver.specialization}
+                        </p>
+                      </div>
+                    </div>
                     {isUnavailableOnSelectedDate && (
                       <p className="mt-2 text-xs font-semibold text-red-400">
                         ❌ Not available on{" "}

@@ -52,17 +52,26 @@ export default function MyBookings() {
   }, []);
 
   const getFilteredBookings = () => {
+    let filtered;
     switch (activeFilter) {
       case "pending":
-        return bookings.filter((b) => b.status === "pending");
+        filtered = bookings.filter((b) => b.status === "pending");
+        break;
       case "approved":
-        return bookings.filter((b) => b.status === "approved");
+        filtered = bookings.filter((b) => b.status === "approved");
+        break;
       case "completed":
-        return bookings.filter((b) => b.status === "completed");
+        filtered = bookings.filter((b) => b.status === "completed");
+        break;
       case "all":
       default:
-        return bookings;
+        filtered = bookings;
     }
+    // Sort by createdAt descending (newest first)
+    return filtered.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   };
 
   const getPendingCount = () =>

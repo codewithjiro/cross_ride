@@ -4,7 +4,16 @@ import { useEffect, useState } from "react";
 import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { MapPin, Users, Check, X, Loader2 } from "lucide-react";
+import {
+  MapPin,
+  Users,
+  Check,
+  X,
+  Loader2,
+  Bell,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 
 interface BookingDetail {
   id: number;
@@ -15,6 +24,7 @@ interface BookingDetail {
     firstName?: string;
     lastName?: string;
     email: string;
+    profileImage?: string;
   };
   trip: {
     route: string;
@@ -110,8 +120,9 @@ export default function BookingsPage() {
       {pendingBookings.length > 0 && (
         <div className="mb-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-[#f1c44f]">
-              🔔 Pending Requests ({pendingBookings.length})
+            <h2 className="flex items-center gap-2 text-2xl font-bold text-[#f1c44f]">
+              <Bell size={28} />
+              Pending Requests ({pendingBookings.length})
             </h2>
           </div>
           <div className="space-y-4">
@@ -122,7 +133,17 @@ export default function BookingsPage() {
               >
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex-1">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-4">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+                        <img
+                          src={
+                            booking.user?.profileImage ||
+                            "/profile/default_profile.jpg"
+                          }
+                          alt={`${booking.user?.firstName} ${booking.user?.lastName}`}
+                          className="h-16 w-16 object-cover"
+                        />
+                      </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-bold text-white">
                           {booking.user?.firstName} {booking.user?.lastName}
@@ -213,8 +234,9 @@ export default function BookingsPage() {
       {/* Approved Bookings Section */}
       {approvedBookings.length > 0 && (
         <div className="mb-8">
-          <h2 className="mb-4 text-2xl font-bold text-green-400">
-            ✓ Approved ({approvedBookings.length})
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-green-400">
+            <CheckCircle size={28} />
+            Approved ({approvedBookings.length})
           </h2>
           <div className="space-y-3">
             {approvedBookings.map((booking) => (
@@ -222,14 +244,26 @@ export default function BookingsPage() {
                 key={booking.id}
                 className="border-green-500/20 bg-green-500/5 p-4"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">
-                      {booking.user?.firstName} {booking.user?.lastName}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {booking.trip?.route}
-                    </p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-1 items-center gap-3">
+                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+                      <img
+                        src={
+                          booking.user?.profileImage ||
+                          "/profile/default_profile.jpg"
+                        }
+                        alt={`${booking.user?.firstName} ${booking.user?.lastName}`}
+                        className="h-12 w-12 object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">
+                        {booking.user?.firstName} {booking.user?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {booking.trip?.route}
+                      </p>
+                    </div>
                   </div>
                   <Badge className="bg-green-500/20 text-green-400">
                     Approved
@@ -244,8 +278,9 @@ export default function BookingsPage() {
       {/* Rejected Bookings Section */}
       {rejectedBookings.length > 0 && (
         <div>
-          <h2 className="mb-4 text-2xl font-bold text-red-400">
-            ✗ Rejected ({rejectedBookings.length})
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-red-400">
+            <XCircle size={28} />
+            Rejected ({rejectedBookings.length})
           </h2>
           <div className="space-y-3">
             {rejectedBookings.map((booking) => (
@@ -253,14 +288,26 @@ export default function BookingsPage() {
                 key={booking.id}
                 className="border-red-500/20 bg-red-500/5 p-4"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-white">
-                      {booking.user?.firstName} {booking.user?.lastName}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {booking.trip?.route}
-                    </p>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-1 items-center gap-3">
+                    <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-gray-800">
+                      <img
+                        src={
+                          booking.user?.profileImage ||
+                          "/profile/default_profile.jpg"
+                        }
+                        alt={`${booking.user?.firstName} ${booking.user?.lastName}`}
+                        className="h-12 w-12 object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-white">
+                        {booking.user?.firstName} {booking.user?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {booking.trip?.route}
+                      </p>
+                    </div>
                   </div>
                   <Badge className="bg-red-500/20 text-red-400">Rejected</Badge>
                 </div>

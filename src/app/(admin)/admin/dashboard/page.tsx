@@ -98,6 +98,7 @@ async function RecentBookings() {
         trip: {
           with: {
             van: true,
+            driver: true,
           },
         },
       },
@@ -108,7 +109,11 @@ async function RecentBookings() {
       switch (status) {
         case "approved":
           return <CheckCircle2 size={18} className="text-emerald-400" />;
+        case "completed":
+          return <CheckCircle2 size={18} className="text-emerald-400" />;
         case "rejected":
+          return <XCircle size={18} className="text-red-400" />;
+        case "cancelled":
           return <XCircle size={18} className="text-red-400" />;
         case "pending":
         default:
@@ -129,43 +134,111 @@ async function RecentBookings() {
             recentBookings.map((booking) => (
               <div
                 key={booking.id}
-                className="group flex flex-col gap-3 rounded-lg border border-[#f1c44f]/10 bg-gradient-to-r from-[#071d3a] to-[#0a2540] p-4 transition-all duration-300 hover:border-[#f1c44f]/30 hover:shadow-md"
+                className="group rounded-lg border border-[#f1c44f]/15 bg-gradient-to-br from-[#0f2d4a]/60 via-[#071d3a] to-[#0a1f37] p-5 transition-all duration-300 hover:border-[#f1c44f]/40 hover:from-[#0f2d4a]/80 hover:shadow-xl hover:shadow-[#f1c44f]/10"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="font-semibold text-white">
-                      {booking.user?.firstName} {booking.user?.lastName}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {booking.trip?.van?.name} • {booking.seatsBooked} seat
-                      {booking.seatsBooked !== 1 ? "s" : ""}
-                    </p>
+                {/* Header: User + Status */}
+                <div className="mb-4 flex items-center justify-between gap-4 border-b border-[#f1c44f]/10 pb-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-4">
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={
+                          booking.user?.profileImage ||
+                          "/profile/default_profile.jpg"
+                        }
+                        alt={`${booking.user?.firstName} ${booking.user?.lastName}`}
+                        className="h-16 w-16 rounded-full border-2 border-[#f1c44f]/30 object-cover shadow-lg"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white">
+                        {booking.user?.firstName} {booking.user?.lastName}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#f1c44f]/40"></span>
+                        {booking.trip?.van?.name}
+                      </p>
+                    </div>
                   </div>
                   <div
-                    className="flex items-center gap-2 rounded-full px-4 py-2 font-medium transition-all duration-300"
+                    className="flex flex-shrink-0 items-center gap-2.5 rounded-full border-2 px-4 py-2 font-semibold whitespace-nowrap shadow-md transition-all duration-300"
                     style={{
                       backgroundColor:
-                        booking.status === "approved"
-                          ? "rgba(16, 185, 129, 0.15)"
-                          : booking.status === "rejected"
-                            ? "rgba(239, 68, 68, 0.15)"
-                            : "rgba(217, 119, 6, 0.15)",
+                        booking.status === "approved" ||
+                        booking.status === "completed"
+                          ? "rgba(16, 185, 129, 0.2)"
+                          : booking.status === "rejected" ||
+                              booking.status === "cancelled"
+                            ? "rgba(239, 68, 68, 0.2)"
+                            : "rgba(217, 119, 6, 0.2)",
+                      borderColor:
+                        booking.status === "approved" ||
+                        booking.status === "completed"
+                          ? "rgba(16, 185, 129, 0.4)"
+                          : booking.status === "rejected" ||
+                              booking.status === "cancelled"
+                            ? "rgba(239, 68, 68, 0.4)"
+                            : "rgba(217, 119, 6, 0.4)",
                     }}
                   >
                     {getStatusIcon(booking.status)}
                     <span
                       style={{
                         color:
-                          booking.status === "approved"
+                          booking.status === "approved" ||
+                          booking.status === "completed"
                             ? "#10b981"
-                            : booking.status === "rejected"
+                            : booking.status === "rejected" ||
+                                booking.status === "cancelled"
                               ? "#ef4444"
                               : "#d97706",
                       }}
-                      className="text-sm font-semibold tracking-wide uppercase"
+                      className="text-xs font-bold tracking-widest uppercase"
                     >
                       {booking.status}
                     </span>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-4 gap-3">
+                  {/* Route */}
+                  <div className="col-span-2 rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/40 p-3 transition-colors hover:border-[#f1c44f]/20">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                      <MapPin size={12} className="text-[#f1c44f]/60" />
+                      Route
+                    </p>
+                    <p className="truncate text-sm font-semibold text-white">
+                      {booking.trip?.route}
+                    </p>
+                  </div>
+
+                  {/* Seats */}
+                  <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/40 p-3 transition-colors hover:border-[#f1c44f]/20">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                      <Users size={12} className="text-[#f1c44f]/60" />
+                      Seats
+                    </p>
+                    <p className="text-sm font-bold text-[#f1c44f]">
+                      {booking.seatsBooked}
+                    </p>
+                  </div>
+
+                  {/* Time */}
+                  <div className="rounded-lg border border-[#f1c44f]/10 bg-[#0a2540]/40 p-3 transition-colors hover:border-[#f1c44f]/20">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                      <Clock size={12} className="text-[#f1c44f]/60" />
+                      Time
+                    </p>
+                    <p className="text-sm font-bold text-white">
+                      {new Date(booking.trip?.departureTime).toLocaleTimeString(
+                        "en-US",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        },
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>

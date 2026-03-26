@@ -39,7 +39,8 @@ export const config = {
      * - api (API routes)
      * - public (public files)
      * - images (image assets)
+     * - drivers (driver images)
      */
-    "/((?!_next/static|_next/image|favicon.ico|api|public|images).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api|public|images|drivers).*)",
   ],
 };

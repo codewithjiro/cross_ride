@@ -4,8 +4,7 @@ import { CheckCircle, Shield, Award, Clock } from "lucide-react";
 type Driver = {
   name: string;
   role: string;
-  initials: string;
-  color: string;
+  image: string;
   experience: string;
   specialization: string;
 };
@@ -14,32 +13,28 @@ const drivers: Driver[] = [
   {
     name: "Jiro Gonzales",
     role: "Senior Driver",
-    initials: "JG",
-    color: "from-blue-500 to-blue-600",
+    image: "/drivers/jiro.jpg",
     experience: "10+ Years",
     specialization: "Fleet Coordinator",
   },
   {
     name: "Jenah Ambagan",
     role: "Professional Driver",
-    initials: "JA",
-    color: "from-purple-500 to-purple-600",
+    image: "/drivers/jenah.jpg",
     experience: "10+ Years",
     specialization: "Safety Specialist",
   },
   {
     name: "Joyce Manaloto",
     role: "Professional Driver",
-    initials: "JM",
-    color: "from-emerald-500 to-emerald-600",
+    image: "/drivers/joyce.jpg",
     experience: "8+ Years",
     specialization: "Route Expert",
   },
   {
     name: "Venice Bumagat",
     role: "Professional Driver",
-    initials: "VB",
-    color: "from-pink-500 to-pink-600",
+    image: "/drivers/venice.jpg",
     experience: "8+ Years",
     specialization: "Customer Care",
   },
@@ -84,12 +79,12 @@ export function Drivers() {
               <div className="from-secondary/30 to-primary/20 absolute -inset-0.5 rounded-2xl bg-gradient-to-br opacity-0 blur transition-all duration-400 group-hover:opacity-100" />
               <div className="from-primary/15 via-primary/5 to-background border-secondary/20 hover:border-secondary/40 relative flex h-full flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-8 text-center shadow-lg transition-all duration-400 hover:-translate-y-1 hover:shadow-2xl">
                 {/* Avatar */}
-                <div
-                  className={`bg-gradient-to-br ${driver.color} mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-xl`}
-                >
-                  <span className="text-3xl font-bold text-white">
-                    {driver.initials}
-                  </span>
+                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gray-800">
+                  <img
+                    src={driver.image}
+                    alt={driver.name}
+                    className="h-24 w-24 object-cover"
+                  />
                 </div>
 
                 {/* Driver Info */}
@@ -188,7 +183,7 @@ export function Drivers() {
                 <p className="text-foreground/90 text-lg font-medium">
                   Our team of {drivers.length} dedicated drivers brings{" "}
                   <span className="text-secondary font-black">
-                    28+ years of combined experience
+                    36+ years of combined experience
                   </span>{" "}
                   to ensure your child&apos;s safe and comfortable journey every
                   day.

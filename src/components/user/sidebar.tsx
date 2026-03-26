@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
@@ -44,6 +44,26 @@ export function LayoutSidebar() {
   const router = useRouter();
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch("/api/bookings");
+        const data = await response.json();
+        if (response.ok && Array.isArray(data)) {
+          const pending = data.filter(
+            (b: { status: string }) => b.status === "pending",
+          ).length;
+          setPendingCount(pending);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pending count:", error);
+      }
+    };
+
+    fetchPendingCount();
+  }, []);
 
   const handleSignOut = async () => {
     setIsLoggingOut(true);
@@ -109,7 +129,12 @@ export function LayoutSidebar() {
                 }`}
               >
                 <Icon size={20} />
-                <span>{item.label}</span>
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.href === "/my-bookings" && pendingCount > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
+                    {pendingCount}
+                  </span>
+                )}
               </Button>
             </Link>
           );
