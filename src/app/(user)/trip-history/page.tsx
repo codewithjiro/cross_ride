@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { MapPin, Calendar, Users, CheckCircle2, XCircle } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Eye,
+} from "lucide-react";
 
 interface TripHistoryBooking {
   id: number;
@@ -137,6 +145,16 @@ function TripHistoryTable({
                     </p>
                   </div>
                 )}
+
+              {/* View Details Button */}
+              <div className="mt-4 ml-6 flex justify-start">
+                <Link href={`/my-bookings/${booking.id}`}>
+                  <Button className="flex items-center gap-2 bg-[#f1c44f] font-semibold text-[#071d3a] hover:bg-[#f1c44f]/90">
+                    <Eye size={16} />
+                    View Details
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </Card>

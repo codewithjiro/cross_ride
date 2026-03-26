@@ -63,6 +63,11 @@ export function LayoutSidebar() {
     };
 
     fetchPendingCount();
+
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchPendingCount, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleSignOut = async () => {

@@ -48,7 +48,10 @@ export async function PATCH(
     if (trip) {
       await db
         .update(trips)
-        .set({ seatsAvailable: trip.seatsAvailable + booking.seatsBooked })
+        .set({
+          seatsAvailable: trip.seatsAvailable + booking.seatsBooked,
+          seatsReserved: Math.max(0, trip.seatsReserved - booking.seatsBooked),
+        })
         .where(eq(trips.id, trip.id));
     }
 

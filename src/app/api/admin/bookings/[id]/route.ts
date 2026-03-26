@@ -62,12 +62,16 @@ export async function PATCH(
           .update(trips)
           .set({
             seatsAvailable: trip.seatsAvailable + booking.seatsBooked,
+            seatsReserved: Math.max(
+              0,
+              trip.seatsReserved - booking.seatsBooked,
+            ),
           })
           .where(eq(trips.id, booking.tripId));
       }
     }
 
-    // If approving, confirm the seatsReserved and change trip to scheduled
+    // If approving, change trip to scheduled (seats already reserved at request time)
     if (body.status === "approved") {
       const trip = await db.query.trips.findFirst({
         where: eq(trips.id, booking.tripId),
@@ -77,7 +81,6 @@ export async function PATCH(
         await db
           .update(trips)
           .set({
-            seatsReserved: trip.seatsReserved + booking.seatsBooked,
             status: "scheduled",
           })
           .where(eq(trips.id, booking.tripId));

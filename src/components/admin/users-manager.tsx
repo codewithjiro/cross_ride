@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { ConfirmationDialog } from "~/components/ui/confirmation-dialog";
 import { Mail, Phone, Calendar, Shield, Crown } from "lucide-react";
 import type { User } from "~/server/db/schema";
 
@@ -14,20 +15,26 @@ interface UsersManagerProps {
 export function UsersManager({ initialUsers }: UsersManagerProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState(false);
+  const [promoteConfirmOpen, setPromoteConfirmOpen] = useState(false);
+  const [userToPromote, setUserToPromote] = useState<User | null>(null);
 
   const adminUsers = users.filter((u) => u.role === "admin");
   const regularUsers = users.filter((u) => u.role === "user");
 
-  const handlePromoteToAdmin = async (userId: string) => {
-    if (!confirm("Are you sure you want to promote this user to Admin?"))
-      return;
+  const handlePromoteClick = (user: User) => {
+    setUserToPromote(user);
+    setPromoteConfirmOpen(true);
+  };
+
+  const handleConfirmPromote = async () => {
+    if (!userToPromote) return;
 
     setLoading(true);
     try {
       const response = await fetch("/api/admin/users/promote", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: userToPromote.id }),
       });
 
       if (!response.ok) {
@@ -38,14 +45,23 @@ export function UsersManager({ initialUsers }: UsersManagerProps) {
       }
 
       setUsers(
-        users.map((u) => (u.id === userId ? { ...u, role: "admin" } : u)),
+        users.map((u) =>
+          u.id === userToPromote.id ? { ...u, role: "admin" } : u,
+        ),
       );
+      setPromoteConfirmOpen(false);
+      setUserToPromote(null);
     } catch (error) {
       alert("Error promoting user");
       console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelPromote = () => {
+    setPromoteConfirmOpen(false);
+    setUserToPromote(null);
   };
 
   const UserCard = ({ user }: { user: User }) => {
@@ -132,7 +148,7 @@ export function UsersManager({ initialUsers }: UsersManagerProps) {
           {user.role === "user" && (
             <div className="flex gap-2">
               <Button
-                onClick={() => handlePromoteToAdmin(user.id)}
+                onClick={() => handlePromoteClick(user)}
                 disabled={loading}
                 className="gap-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50"
               >
@@ -217,6 +233,18 @@ export function UsersManager({ initialUsers }: UsersManagerProps) {
           <p className="text-gray-400">No users found.</p>
         </Card>
       )}
+
+      <ConfirmationDialog
+        isOpen={promoteConfirmOpen}
+        title="Promote to Admin"
+        description={`Are you sure you want to promote ${userToPromote?.firstName} ${userToPromote?.lastName} to Admin? They will have full access to the admin panel.`}
+        confirmText="Promote to Admin"
+        cancelText="Cancel"
+        isDangerous={false}
+        isLoading={loading}
+        onConfirm={handleConfirmPromote}
+        onCancel={handleCancelPromote}
+      />
     </div>
   );
 }

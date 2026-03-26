@@ -88,6 +88,11 @@ export function Sidebar() {
     };
 
     fetchCounts();
+
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchCounts, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogout = () => {
@@ -177,8 +182,7 @@ export function Sidebar() {
         <Button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          variant="outline"
-          className="w-full gap-2 border-[#f1c44f]/50 text-[#f1c44f] hover:bg-[#f1c44f]/10 disabled:opacity-50"
+          className="w-full gap-2 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
         >
           <LogOut size={18} />
           Logout

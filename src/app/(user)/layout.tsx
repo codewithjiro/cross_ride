@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LayoutSidebar } from "~/components/user/sidebar";
+import { SessionManager } from "~/components/session-manager";
 
 interface AuthResponse {
   authenticated: boolean;
@@ -62,6 +63,12 @@ export default function UserLayout({
     <div className="flex min-h-screen bg-[#071d3a]">
       <LayoutSidebar />
       <main className="h-screen flex-1 overflow-y-auto">{children}</main>
+      <SessionManager
+        inactivityTimeoutMinutes={30}
+        warningMinutesBefore={5}
+        logoutOnClose={true}
+        enableWarning={true}
+      />
     </div>
   );
 }

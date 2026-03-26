@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { db } from "~/server/db";
 import { Card } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import {
   Truck,
   Users,
@@ -9,7 +10,11 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  TrendingUp,
+  BarChart3,
+  Zap,
 } from "lucide-react";
+import { AutoCompleteBookings } from "~/components/admin/auto-complete-bookings";
 
 // Force dynamic rendering (no static prerendering)
 export const dynamic = "force-dynamic";
@@ -86,6 +91,125 @@ async function DashboardStats() {
     );
   } catch {
     return <div className="text-red-500">Failed to load statistics</div>;
+  }
+}
+
+async function BookingStatistics() {
+  try {
+    const bookings = await db.query.bookings.findMany({
+      with: {
+        trip: true,
+      },
+    });
+
+    // Calculate booking status distribution
+    const statusStats = {
+      pending: bookings.filter((b) => b.status === "pending").length,
+      approved: bookings.filter((b) => b.status === "approved").length,
+      completed: bookings.filter((b) => b.status === "completed").length,
+      rejected: bookings.filter((b) => b.status === "rejected").length,
+      cancelled: bookings.filter((b) => b.status === "cancelled").length,
+    };
+
+    const maxStatus = Math.max(...Object.values(statusStats), 1);
+
+    // Get top routes by bookings
+    const routeBookings: { [key: string]: number } = {};
+    bookings.forEach((b) => {
+      const route = b.trip?.route || "Unknown";
+      routeBookings[route] = (routeBookings[route] || 0) + 1;
+    });
+
+    const topRoutes = Object.entries(routeBookings)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    const maxRoute = Math.max(...topRoutes.map((r) => r[1]), 1);
+
+    return (
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Booking Status Distribution */}
+        <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <BarChart3 size={28} className="text-[#f1c44f]" />
+            <h2 className="text-2xl font-bold text-white">Booking Status</h2>
+          </div>
+          <div className="space-y-4">
+            {Object.entries(statusStats).map(([status, count]) => (
+              <div key={status}>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-400 capitalize">
+                    {status}
+                  </span>
+                  <span className="text-sm font-bold text-white">{count}</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#0a1f37]">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      status === "pending"
+                        ? "bg-amber-500"
+                        : status === "approved"
+                          ? "bg-blue-500"
+                          : status === "completed"
+                            ? "bg-green-500"
+                            : status === "rejected"
+                              ? "bg-red-500"
+                              : "bg-gray-500"
+                    }`}
+                    style={{
+                      width: `${(count / maxStatus) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Top Routes by Bookings */}
+        <Card className="border-[#f1c44f]/20 bg-[#0a2540] p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <TrendingUp size={28} className="text-[#f1c44f]" />
+            <h2 className="text-2xl font-bold text-white">Top Routes</h2>
+          </div>
+          <div className="space-y-4">
+            {topRoutes.length > 0 ? (
+              topRoutes.map(([route, count], index) => (
+                <div key={route}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#f1c44f]/20 text-sm font-bold text-[#f1c44f]">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-semibold break-words text-gray-300">
+                        {route}
+                      </span>
+                    </div>
+                    <span className="text-sm font-bold text-[#f1c44f]">
+                      {count}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[#0a1f37]">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#f1c44f] to-[#d4a850] transition-all duration-300"
+                      style={{
+                        width: `${(count / maxRoute) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="py-4 text-center text-gray-400">No routes yet</p>
+            )}
+          </div>
+        </Card>
+      </div>
+    );
+  } catch {
+    return (
+      <div className="text-red-500">Failed to load booking statistics</div>
+    );
   }
 }
 
@@ -267,6 +391,18 @@ export default function AdminDashboard() {
       >
         <DashboardStats />
       </Suspense>
+
+      <div className="mt-10">
+        <Suspense
+          fallback={<div className="text-white">Loading statistics...</div>}
+        >
+          <BookingStatistics />
+        </Suspense>
+      </div>
+
+      <div className="mt-10">
+        <AutoCompleteBookings />
+      </div>
 
       <div className="mt-10">
         <Suspense

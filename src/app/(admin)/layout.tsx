@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "~/components/admin/sidebar";
+import { SessionManager } from "~/components/session-manager";
 
 interface AuthResponse {
   authenticated: boolean;
@@ -64,6 +65,12 @@ export default function AdminLayout({
     <div className="flex h-screen bg-[#071d3a]">
       <Sidebar />
       <main className="flex-1 overflow-auto">{children}</main>
+      <SessionManager
+        inactivityTimeoutMinutes={30}
+        warningMinutesBefore={5}
+        logoutOnClose={true}
+        enableWarning={true}
+      />
     </div>
   );
 }
