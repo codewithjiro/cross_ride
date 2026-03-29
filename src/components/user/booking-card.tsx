@@ -81,7 +81,7 @@ export function BookingCard({
       if (onCompleted) {
         onCompleted();
       }
-      
+
       // Small delay to ensure server cache is updated
       setTimeout(() => {
         router.refresh();
