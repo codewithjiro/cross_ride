@@ -51,6 +51,8 @@ export default function UserProfile() {
     phoneNumber: "",
   });
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -110,6 +112,8 @@ export default function UserProfile() {
 
   const handleSaveName = async () => {
     try {
+      setError("");
+      setSuccess("");
       setSaving(true);
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
@@ -125,9 +129,17 @@ export default function UserProfile() {
           `${editNameData.firstName} ${editNameData.lastName}`.trim();
         setUserProfile((prev) => (prev ? { ...prev, name: newName } : null));
         setIsEditingName(false);
+        setSuccess("Name updated successfully");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to update name");
       }
-    } catch (error) {
-      console.error("Failed to update name:", error);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to update name";
+      console.error("Failed to update name:", err);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -135,6 +147,8 @@ export default function UserProfile() {
 
   const handleSaveEmail = async () => {
     try {
+      setError("");
+      setSuccess("");
       setSaving(true);
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
@@ -147,9 +161,17 @@ export default function UserProfile() {
           prev ? { ...prev, email: editEmailData } : null,
         );
         setIsEditingEmail(false);
+        setSuccess("Email updated successfully");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to update email");
       }
-    } catch (error) {
-      console.error("Failed to update email:", error);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to update email";
+      console.error("Failed to update email:", err);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -157,6 +179,8 @@ export default function UserProfile() {
 
   const handleSavePhone = async () => {
     try {
+      setError("");
+      setSuccess("");
       setSaving(true);
       const phoneNumber =
         editPhoneData.countryCode +
@@ -170,9 +194,17 @@ export default function UserProfile() {
       if (response.ok) {
         setUserProfile((prev) => (prev ? { ...prev, phoneNumber } : null));
         setIsEditingPhone(false);
+        setSuccess("Phone number updated successfully");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to update phone number");
       }
-    } catch (error) {
-      console.error("Failed to update phone number:", error);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to update phone number";
+      console.error("Failed to update phone number:", err);
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -180,6 +212,8 @@ export default function UserProfile() {
 
   const handleProfilePictureUpload = async (imageUrl: string) => {
     try {
+      setError("");
+      setSuccess("");
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -190,9 +224,17 @@ export default function UserProfile() {
         setUserProfile((prev) =>
           prev ? { ...prev, profileImage: imageUrl } : null,
         );
+        setSuccess("Profile picture updated successfully");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to update profile picture");
       }
-    } catch (error) {
-      console.error("Failed to update profile picture:", error);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Failed to update profile picture";
+      console.error("Failed to update profile picture:", err);
+      setError(errorMsg);
     }
   };
 
@@ -212,6 +254,18 @@ export default function UserProfile() {
           <h1 className="text-4xl font-bold text-white">Profile Settings</h1>
           <p className="mt-2 text-gray-400">Manage your account information</p>
         </div>
+
+        {/* Error/Success Messages */}
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-300">
+            {success}
+          </div>
+        )}
 
         {/* Personal Information */}
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">

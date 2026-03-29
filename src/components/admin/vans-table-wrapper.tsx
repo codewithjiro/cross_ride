@@ -24,6 +24,8 @@ export function VansTableWrapper({ vans: initialVans }: { vans: Van[] }) {
   const [vanToDelete, setVanToDelete] = useState<Van | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteError, setDeleteError] = useState<string>("");
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   // Refetch vans when refreshKey changes
   useEffect(() => {
@@ -68,16 +70,23 @@ export function VansTableWrapper({ vans: initialVans }: { vans: Van[] }) {
 
       if (!response.ok) {
         const data = await response.json();
-        alert(`Error: ${data.error}`);
+        setDeleteError(data.error || "Failed to delete van");
+        setDeleteConfirmOpen(false); // Close confirmation dialog
+        setShowErrorDialog(true); // Show error dialog
+        setIsDeleting(false);
         return;
       }
 
       setVans(vans.filter((v) => v.id !== vanToDelete.id));
+      setDeleteConfirmOpen(false);
     } catch (err) {
-      alert("Error deleting van");
+      const errorMsg =
+        err instanceof Error ? err.message : "Error deleting van";
+      setDeleteError(errorMsg);
+      setDeleteConfirmOpen(false); // Close confirmation dialog
+      setShowErrorDialog(true); // Show error dialog
     } finally {
       setIsDeleting(false);
-      setDeleteConfirmOpen(false);
       setVanToDelete(null);
     }
   };
@@ -175,6 +184,32 @@ export function VansTableWrapper({ vans: initialVans }: { vans: Van[] }) {
         onCancel={handleCancelDelete}
         isLoading={isDeleting}
       />
+
+      {/* Error Dialog */}
+      {showErrorDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md border-red-500/30 bg-[#0a2540] p-6">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-red-400">
+                Cannot Delete Van
+              </h2>
+            </div>
+            <div className="mb-6">
+              <p className="text-sm text-gray-300">{deleteError}</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowErrorDialog(false);
+                setDeleteConfirmOpen(false);
+                setDeleteError("");
+              }}
+              className="w-full rounded-lg bg-red-500/20 px-4 py-2 font-semibold text-red-400 transition-colors hover:bg-red-500/30"
+            >
+              OK
+            </button>
+          </Card>
+        </div>
+      )}
     </>
   );
 }

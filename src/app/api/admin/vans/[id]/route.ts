@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "~/server/db";
-import { vans, adminLogs } from "~/server/db/schema";
+import { vans, adminLogs, trips } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import { requireAdmin } from "~/lib/auth";
 
@@ -87,6 +87,20 @@ export async function DELETE(
 
     if (!van) {
       return NextResponse.json({ error: "Van not found" }, { status: 404 });
+    }
+
+    // Check if van has active trips
+    const activeTrips = await db.query.trips.findMany({
+      where: eq(trips.vanId, vanId),
+    });
+
+    if (activeTrips && activeTrips.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete van with ${activeTrips.length} active trip(s). Please delete or reassign these trips first.`,
+        },
+        { status: 400 },
+      );
     }
 
     // Delete van
